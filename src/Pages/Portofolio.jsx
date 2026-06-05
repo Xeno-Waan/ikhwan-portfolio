@@ -148,11 +148,27 @@ const defaultProjects = [
   }
 ];
 
+const defaultCertificates = [
+  { id: 1, Img: "/certificates/Certificate1 (1).jpg" },
+  { id: 2, Img: "/certificates/Certificate2.jpg" },
+  { id: 3, Img: "/certificates/Certificate3.jpg" },
+  { id: 4, Img: "/certificates/Certificate4.jpg" },
+  { id: 5, Img: "/certificates/Certificate5.jpg" },
+  { id: 6, Img: "/certificates/Certificate6.jpg" },
+  { id: 7, Img: "/certificates/Certificate7.jpg" },
+  { id: 8, Img: "/certificates/Certificate8.jpg" },
+  { id: 9, Img: "/certificates/Certificate9.jpg" },
+  { id: 10, Img: "/certificates/Certificate10.jpg" },
+  { id: 11, Img: "/certificates/Certificate11.jpg" },
+  { id: 12, Img: "/certificates/Certificate12.jpg" }
+];
+
 export default function FullWidthTabs() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const [value, setValue] = useState(0);
   const [projects, setProjects] = useState(defaultProjects); // Menggunakan defaultProjects sebagai initial state
+  const [certificates, setCertificates] = useState(defaultCertificates);
   const [currentPageProjects, setCurrentPageProjects] = useState(1);
   const itemsPerPage = 8;
 
@@ -160,33 +176,46 @@ export default function FullWidthTabs() {
     if (!supabase) {
       console.warn("Supabase client is not initialized. Using default/cached projects.");
       setProjects(defaultProjects);
+      setCertificates(defaultCertificates);
       return;
     }
     try {
-      const { data, error } = await supabase
-        .from("projects")
-        .select("*")
-        .order('id', { ascending: true });
+      const [projectsResponse, certificatesResponse] = await Promise.all([
+        supabase.from("projects").select("*").order('id', { ascending: true }),
+        supabase.from("certificates").select("*").order('id', { ascending: true }), 
+      ]);
 
-      if (error) throw error;
+      if (projectsResponse.error) throw projectsResponse.error;
+      if (certificatesResponse.error) throw certificatesResponse.error;
 
-      const projectData = data || [];
+      const projectData = projectsResponse.data || [];
+      const certificateData = certificatesResponse.data || [];
       const finalProjectData = projectData.length > 0 ? projectData : defaultProjects;
+      const finalCertificateData = certificateData.length > 0 ? certificateData : defaultCertificates;
       
       setProjects(finalProjectData);
+      setCertificates(finalCertificateData);
       localStorage.setItem("projects", JSON.stringify(finalProjectData));
+      localStorage.setItem("certificates", JSON.stringify(finalCertificateData));
     } catch (error) {
       console.error("Error fetching data from Supabase:", error.message);
       setProjects(defaultProjects);
+      setCertificates(defaultCertificates);
     }
   }, []);
 
   useEffect(() => {
     const cachedProjects = localStorage.getItem('projects');
+    const cachedCertificates = localStorage.getItem('certificates');
     if (cachedProjects) {
       setProjects(JSON.parse(cachedProjects));
     } else {
       setProjects(defaultProjects);
+    }
+    if (cachedCertificates) {
+      setCertificates(JSON.parse(cachedCertificates));
+    } else {
+      setCertificates(defaultCertificates);
     }
     fetchData();
   }, [fetchData]);
@@ -204,6 +233,11 @@ export default function FullWidthTabs() {
     return [];
   };
 
+  const displayedCertificates = certificates.slice(
+    (currentPageProjects - 1) * itemsPerPage,
+    currentPageProjects * itemsPerPage
+  );
+
   const renderProjectGrid = (filtered) => {
     const displayed = filtered.slice(
       (currentPageProjects - 1) * itemsPerPage,
@@ -214,7 +248,7 @@ export default function FullWidthTabs() {
       <>
         <div className="container mx-auto flex justify-center items-center overflow-hidden">
           {displayed.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
               {displayed.map((project, index) => (
                 <div
                   key={project.id || index}
@@ -360,6 +394,11 @@ export default function FullWidthTabs() {
               label="Video"
               {...a11yProps(3)}
             />
+            <Tab
+              icon={<Award className="mb-2 w-5 h-5 transition-all duration-300" />}
+              label="Certificates"
+              {...a11yProps(4)}
+            />
           </Tabs>
         </AppBar>
 
@@ -385,6 +424,37 @@ export default function FullWidthTabs() {
 
           <TabPanel value={value} index={3} dir={theme.direction}>
             {renderProjectGrid(getFilteredProjects(3))}
+          </TabPanel>
+
+          <TabPanel value={value} index={4} dir={theme.direction}>
+            <div className="container mx-auto flex justify-center items-center overflow-hidden">
+              {displayedCertificates.length > 0 ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 w-full">
+                  {displayedCertificates.map((certificate, index) => (
+                    <div
+                      key={certificate.id || index}
+                      data-aos={index % 4 === 0 ? "fade-up-right" : index % 4 === 1 ? "fade-up" : index % 4 === 2 ? "fade-up" : "fade-up-left"}
+                      data-aos-duration={index % 4 === 0 ? "1000" : index % 4 === 1 ? "1100" : index % 4 === 2 ? "1200" : "1000"}
+                      className="w-full"
+                    >
+                      <Certificate ImgSertif={certificate.Img} />
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-20 text-gray-500 font-light text-sm">
+                  No certificates yet.
+                </div>
+              )}
+            </div>
+            <Pagination
+              currentPage={currentPageProjects}
+              totalPages={Math.ceil(certificates.length / itemsPerPage)}
+              onPageChange={(page) => {
+                setCurrentPageProjects(page);
+                document.getElementById("Projects")?.scrollIntoView({ behavior: "smooth" });
+              }}
+            />
           </TabPanel>
         </SwipeableViews>
       </Box>
