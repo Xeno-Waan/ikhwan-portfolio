@@ -1,6 +1,74 @@
-import React, { useEffect, memo, useMemo } from "react"
+import React, { useEffect, useState, memo, useMemo, useCallback } from "react"
 import { Link } from "react-router-dom"
-import { FileText, Code, Award, Globe, ArrowUpRight, Sparkles, UserCheck } from "lucide-react"
+import { FileText, Code, Award, Globe, ArrowUpRight, Sparkles, UserCheck, Video, Palette } from "lucide-react"
+import { supabase } from "../supabase"
+
+// Data proyek default yang akan digunakan sebagai fallback jika Supabase tidak tersedia
+const defaultProjects = [
+  {
+    id: 1,
+    Img: "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
+    Title: "Sistem Pendaftaran Online SMA Ibnuaqil",
+    Description: "Sistem pendaftaran online untuk SMA Ibnuaqil yang memudahkan calon siswa dalam proses pendaftaran secara digital dengan fitur lengkap seperti pengisian formulir online, upload berkas, dan tracking status pendaftaran.",
+    Link: "https://smaibnuaqil.my.id",
+    Category: "website"
+  },
+  {
+    id: 2,
+    Img: "https://images.unsplash.com/photo-1490818387583-1baba5e638af?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
+    Title: "NutriKalku - Kalkulator Nilai Gizi Resep Makanan",
+    Description: "Aplikasi web untuk menghitung nilai gizi dari resep makanan. Pengguna dapat memasukkan bahan makanan beserta gram-nya, dan sistem akan menghitung total nilai gizi seperti kalori, protein, karbohidrat, dan lemak.",
+    Link: "https://nutrikalku.my.id",
+    Category: "website"
+  },
+  {
+    id: 3,
+    Img: "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
+    Title: "XenoFrame - Pencari Foto Terbaik dalam Video",
+    Description: "Website untuk mencari frame/foto terbaik di dalam video. XenoFrame menganalisis video dan mengidentifikasi frame dengan kualitas visual terbaik berdasarkan komposisi, ketajaman, dan estetika. Link: https://xeno-waan.github.io/Xeno---Frame/",
+    Link: "https://xeno-waan.github.io/Xeno---Frame/",
+    Category: "website"
+  },
+  {
+    id: 4,
+    Img: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
+    Title: "Brand Identity - Obsidian Cafe",
+    Description: "A modern visual brand identity concept developed for Obsidian Cafe. Focuses on premium luxury aesthetics using minimal design elements, monochrome schemes, and gold accents.",
+    Link: "",
+    Category: "design"
+  },
+  {
+    id: 5,
+    Img: "https://images.unsplash.com/photo-1536440136628-849c177e76a1?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
+    Title: "Cinematic Travel Reel 2026",
+    Description: "Professional video montage featuring advanced color grading (teal & orange), matching music transitions, and cinematic storytelling principles.",
+    Link: "https://youtube.com",
+    Category: "video"
+  },
+  {
+    id: 6,
+    Img: "https://images.unsplash.com/photo-1555066931-4365d14bab8c?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
+    Title: "Smart Home Controller UI",
+    Description: "An elegant interactive dashboard for controlling smart home appliances, featuring dark mode optimization, dynamic widget adjustments, and real-time power analytics.",
+    Link: "",
+    Category: "design"
+  }
+];
+
+const defaultCertificates = [
+  { id: 1, Img: "/certificates/Certificate1 (1).jpg" },
+  { id: 2, Img: "/certificates/Certificate2.jpg" },
+  { id: 3, Img: "/certificates/Certificate3.jpg" },
+  { id: 4, Img: "/certificates/Certificate4.jpg" },
+  { id: 5, Img: "/certificates/Certificate5.jpg" },
+  { id: 6, Img: "/certificates/Certificate6.jpg" },
+  { id: 7, Img: "/certificates/Certificate7.jpg" },
+  { id: 8, Img: "/certificates/Certificate8.jpg" },
+  { id: 9, Img: "/certificates/Certificate9.jpg" },
+  { id: 10, Img: "/certificates/Certificate10.jpg" },
+  { id: 11, Img: "/certificates/Certificate11.jpg" },
+  { id: 12, Img: "/certificates/Certificate12.jpg" }
+];
 
 // Memoized Components
 const Header = memo(() => (
@@ -65,16 +133,16 @@ const ProfileImage = memo(() => (
 ));
 
 const StatCard = memo(({ icon: Icon, color, value, label, description, animation }) => (
-  <div data-aos={animation} data-aos-duration={1300} className="relative group">
-    <div className="relative z-10 bg-[#0f0e12]/60 backdrop-blur-lg rounded-2xl p-6 border border-white/5 overflow-hidden transition-all duration-300 hover:scale-105 hover:border-[#bfa37a]/30 hover:shadow-2xl h-full flex flex-col justify-between">
+  <div data-aos={animation} data-aos-duration={1300} className="relative group h-full">
+    <div className="relative z-10 bg-[#0f0e12]/60 backdrop-blur-lg rounded-2xl p-4 sm:p-6 border border-white/5 overflow-hidden transition-all duration-300 hover:scale-105 hover:border-[#bfa37a]/30 hover:shadow-2xl h-full flex flex-col justify-between">
       <div className={`absolute -z-10 inset-0 bg-gradient-to-br ${color} opacity-5 group-hover:opacity-15 transition-opacity duration-300`}></div>
       
-      <div className="flex items-center justify-between mb-4">
-        <div className="w-14 h-14 rounded-full flex items-center justify-center bg-white/5 transition-transform group-hover:rotate-6">
-          <Icon className="w-6 h-6 text-[#dfcfb9]" />
+      <div className="flex items-center justify-between mb-4 gap-2">
+        <div className="w-10 h-10 sm:w-14 sm:h-14 rounded-full flex items-center justify-center bg-white/5 transition-transform group-hover:rotate-6 flex-shrink-0">
+          <Icon className="w-5 h-5 sm:w-6 sm:h-6 text-[#dfcfb9]" />
         </div>
         <span 
-          className="text-4xl font-bold font-serif text-white"
+          className="text-2xl sm:text-4xl font-bold font-serif text-white block truncate"
           data-aos="fade-up-left"
           data-aos-duration="1500"
           data-aos-anchor-placement="top-bottom"
@@ -85,23 +153,23 @@ const StatCard = memo(({ icon: Icon, color, value, label, description, animation
 
       <div>
         <p 
-          className="text-xs uppercase tracking-wider text-gray-400 mb-2 font-medium"
+          className="text-[10px] sm:text-xs uppercase tracking-wider text-gray-400 mb-1 sm:mb-2 font-medium"
           data-aos="fade-up"
           data-aos-duration="800"
           data-aos-anchor-placement="top-bottom"
         >
           {label}
         </p>
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-1">
           <p 
-            className="text-xs text-gray-500 font-light"
+            className="text-[10px] sm:text-xs text-gray-500 font-light line-clamp-1"
             data-aos="fade-up"
             data-aos-duration="1000"
             data-aos-anchor-placement="top-bottom"
           >
             {description}
           </p>
-          <ArrowUpRight className="w-4 h-4 text-[#dfcfb9]/50 group-hover:text-[#dfcfb9] transition-colors" />
+          <ArrowUpRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#dfcfb9]/50 group-hover:text-[#dfcfb9] transition-colors flex-shrink-0" />
         </div>
       </div>
     </div>
@@ -109,52 +177,116 @@ const StatCard = memo(({ icon: Icon, color, value, label, description, animation
 ));
 
 const AboutPage = () => {
-  // Memoized calculations
-  const { totalProjects, totalCertificates, YearExperience } = useMemo(() => {
-    const storedProjects = JSON.parse(localStorage.getItem("projects") || "[]");
-    const storedCertificates = JSON.parse(localStorage.getItem("certificates") || "[]");
-    
+  const [projects, setProjects] = useState(() => {
+    const cached = localStorage.getItem("projects");
+    return cached ? JSON.parse(cached) : defaultProjects;
+  });
+  const [certificates, setCertificates] = useState(() => {
+    const cached = localStorage.getItem("certificates");
+    return cached ? JSON.parse(cached) : defaultCertificates;
+  });
+
+  const fetchData = useCallback(async () => {
+    if (!supabase) return;
+    try {
+      const [projectsResponse, certificatesResponse] = await Promise.all([
+        supabase.from("projects").select("*").order('id', { ascending: true }),
+        supabase.from("certificates").select("*").order('id', { ascending: true }),
+      ]);
+
+      if (!projectsResponse.error && projectsResponse.data) {
+        const pData = projectsResponse.data.length > 0 ? projectsResponse.data : defaultProjects;
+        setProjects(pData);
+        localStorage.setItem("projects", JSON.stringify(pData));
+      }
+      if (!certificatesResponse.error && certificatesResponse.data) {
+        const cData = certificatesResponse.data.length > 0 ? certificatesResponse.data : defaultCertificates;
+        setCertificates(cData);
+        localStorage.setItem("certificates", JSON.stringify(cData));
+      }
+    } catch (error) {
+      console.error("Error fetching data in AboutPage:", error);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  // Perhitungan statistik memoized
+  const stats = useMemo(() => {
+    const totalProjects = projects.length;
+    const websiteProjects = projects.filter(p => p.Category?.toLowerCase() === "website").length;
+    const designProjects = projects.filter(p => p.Category?.toLowerCase() === "design").length;
+    const videoProjects = projects.filter(p => p.Category?.toLowerCase() === "video").length;
+    const totalCertificates = certificates.length;
+
     const startDate = new Date("2021-11-06");
     const today = new Date();
     const experience = today.getFullYear() - startDate.getFullYear() -
       (today < new Date(today.getFullYear(), startDate.getMonth(), startDate.getDate()) ? 1 : 0);
 
     return {
-      totalProjects: storedProjects.length,
-      totalCertificates: storedCertificates.length,
-      YearExperience: experience
+      totalProjects,
+      websiteProjects,
+      designProjects,
+      videoProjects,
+      totalCertificates,
+      experience
     };
-  }, []);
+  }, [projects, certificates]);
 
-
-
-  // Memoized stats data
+  // Data statistik memoized
   const statsData = useMemo(() => [
     {
       icon: Code,
       color: "from-[#bfa37a] to-[#dfcfb9]",
-      value: totalProjects,
+      value: stats.totalProjects,
       label: "Total Projects",
-      description: "Innovative web solutions crafted",
+      description: "All creative works",
       animation: "fade-right",
     },
     {
-      icon: Award,
+      icon: Globe,
       color: "from-[#dfcfb9] to-[#bfa37a]",
-      value: totalCertificates,
-      label: "Certificates",
-      description: "Professional skills validated",
+      value: stats.websiteProjects,
+      label: "Websites",
+      description: "Web apps developed",
       animation: "fade-up",
     },
     {
-      icon: Globe,
+      icon: Palette,
       color: "from-[#bfa37a] to-[#dfcfb9]",
-      value: YearExperience,
-      label: "Years of Experience",
-      description: "Continuous learning journey",
+      value: stats.designProjects,
+      label: "Design",
+      description: "Visual designs",
+      animation: "fade-up",
+    },
+    {
+      icon: Video,
+      color: "from-[#dfcfb9] to-[#bfa37a]",
+      value: stats.videoProjects,
+      label: "Video",
+      description: "Cinematic edits",
       animation: "fade-left",
     },
-  ], [totalProjects, totalCertificates, YearExperience]);
+    {
+      icon: Award,
+      color: "from-[#bfa37a] to-[#dfcfb9]",
+      value: stats.totalCertificates,
+      label: "Certificates",
+      description: "Validated skills",
+      animation: "fade-up",
+    },
+    {
+      icon: UserCheck,
+      color: "from-[#dfcfb9] to-[#bfa37a]",
+      value: stats.experience,
+      label: "Years of Experience",
+      description: "Continuous learning",
+      animation: "fade-left",
+    },
+  ], [stats]);
 
   return (
     <div
@@ -238,7 +370,7 @@ const AboutPage = () => {
         </div>
 
         <Link to="/projects">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-16 cursor-pointer">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-6 mt-16 cursor-pointer">
             {statsData.map((stat) => (
               <StatCard key={stat.label} {...stat} />
             ))}
