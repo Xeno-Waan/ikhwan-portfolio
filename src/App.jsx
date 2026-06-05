@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Link } from "react-router-dom";
 import React, { useEffect } from 'react';
 import "./index.css";
 import Home from "./Pages/Home";
@@ -17,50 +17,35 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import AOS from 'aos';
 import 'aos/dist/aos.css';
 
-const LandingPage = () => {
+const PageLayout = ({ children }) => {
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [children]);
+
   return (
     <>
       <Navbar />
       <AnimatedBackground />
-      <Home />
-      <About />
-      <Portofolio />
-      <Certificates />
-      <TechStack />
-      <ContactPage />
-      <footer>
-        <center>
-          <hr className="my-3 border-gray-400 opacity-15 sm:mx-auto lg:my-6 text-center" />
-          <span className="block text-sm pb-4 text-gray-500 text-center dark:text-gray-400">
-            © 2026{" "}
-            <a href="#Home" className="hover:underline">
-              Muhammad Ikhwan Manshur
-            </a>
-            . All Rights Reserved.
-          </span>
-        </center>
-      </footer>
+      <div className="pt-16 min-h-[calc(100vh-64px)] flex flex-col justify-between">
+        <div className="flex-grow">
+          {children}
+        </div>
+        <footer>
+          <center>
+            <hr className="my-3 border-gray-400 opacity-15 sm:mx-auto lg:my-6 text-center" />
+            <span className="block text-sm pb-4 text-gray-500 text-center dark:text-gray-400">
+              © 2026{" "}
+              <Link to="/" className="hover:underline">
+                Muhammad Ikhwan Manshur
+              </Link>
+              . All Rights Reserved.
+            </span>
+          </center>
+        </footer>
+      </div>
     </>
   );
 };
-
-const ProjectPageLayout = () => (
-  <>
-    <ProjectDetails />
-    <footer>
-      <center>
-        <hr className="my-3 border-gray-400 opacity-15 sm:mx-auto lg:my-6 text-center" />
-        <span className="block text-sm pb-4 text-gray-500 text-center dark:text-gray-400">
-          © 2026{" "}
-          <a href="/" className="hover:underline">
-            Muhammad Ikhwan Manshur
-          </a>
-          . All Rights Reserved.
-        </span>
-      </center>
-    </footer>
-  </>
-);
 
 function App() {
   useEffect(() => {
@@ -74,15 +59,20 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<LandingPage />} />
-        <Route path="/project/:id" element={<ProjectPageLayout />} />
+        <Route path="/" element={<PageLayout><Home /></PageLayout>} />
+        <Route path="/about" element={<PageLayout><About /></PageLayout>} />
+        <Route path="/projects" element={<PageLayout><Portofolio /></PageLayout>} />
+        <Route path="/certificates" element={<PageLayout><Certificates /></PageLayout>} />
+        <Route path="/tech-stack" element={<PageLayout><TechStack /></PageLayout>} />
+        <Route path="/contact" element={<PageLayout><ContactPage /></PageLayout>} />
+        <Route path="/project/:id" element={<PageLayout><ProjectDetails /></PageLayout>} />
         <Route path="/login" element={<Login />} />
         <Route path="/admin" element={
           <ProtectedRoute>
             <AdminDashboard />
           </ProtectedRoute>
         } />
-        <Route path="*" element={<NotFoundPage />} /> {/* Ini route 404 */}
+        <Route path="*" element={<PageLayout><NotFoundPage /></PageLayout>} />
       </Routes>
     </BrowserRouter>
   );

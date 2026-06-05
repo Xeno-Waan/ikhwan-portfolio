@@ -1,4 +1,5 @@
 import React, { useEffect, memo, useMemo } from "react"
+import { Link } from "react-router-dom"
 import { FileText, Code, Award, Globe, ArrowUpRight, Sparkles, UserCheck } from "lucide-react"
 
 // Memoized Components
@@ -221,7 +222,7 @@ const AboutPage = () => {
                   <FileText className="w-5 h-5" /> Download CV
                 </button>
               </a>
-              <a href="#Projects" className="w-full sm:w-auto">
+              <Link to="/projects" className="w-full sm:w-auto">
                 <button 
                   data-aos="fade-up"
                   data-aos-duration="1000"
@@ -229,20 +230,20 @@ const AboutPage = () => {
                 >
                   <Code className="w-5 h-5" /> View Projects
                 </button>
-              </a>
+              </Link>
             </div>
           </div>
 
           <ProfileImage />
         </div>
 
-        <a href="#Projects">
+        <Link to="/projects">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-16 cursor-pointer">
             {statsData.map((stat) => (
               <StatCard key={stat.label} {...stat} />
             ))}
           </div>
-        </a>
+        </Link>
       </div>
 
       <style jsx>{`

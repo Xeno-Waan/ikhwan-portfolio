@@ -1,48 +1,27 @@
 import React, { useState, useEffect } from "react";
+import { Link, useLocation } from "react-router-dom";
 import { Menu, X } from "lucide-react";
 
 const Navbar = () => {
     const [isOpen, setIsOpen] = useState(false);
     const [scrolled, setScrolled] = useState(false);
-    const [activeSection, setActiveSection] = useState("Home");
+    const location = useLocation();
+    const activePath = location.pathname;
     
     const navItems = [
-        { href: "#Home", label: "Home" },
-        { href: "#About", label: "About" },
-        { href: "#Projects", label: "Projects" },
-        { href: "#Certificates", label: "Certificates" },
-        { href: "#TechStack", label: "Tech Stack" },
-        { href: "#Contact", label: "Contact" },
+        { path: "/", label: "Home" },
+        { path: "/about", label: "About" },
+        { path: "/projects", label: "Projects" },
+        { path: "/certificates", label: "Certificates" },
+        { path: "/tech-stack", label: "Tech Stack" },
+        { path: "/contact", label: "Contact" },
     ];
 
     useEffect(() => {
         const handleScroll = () => {
             setScrolled(window.scrollY > 20);
-            const sections = navItems.map(item => {
-                const section = document.querySelector(item.href);
-                if (section) {
-                    return {
-                        id: item.href.replace("#", ""),
-                        offset: section.offsetTop - 550,
-                        height: section.offsetHeight
-                    };
-                }
-                return null;
-            }).filter(Boolean);
-
-            const currentPosition = window.scrollY;
-            const active = sections.find(section => 
-                currentPosition >= section.offset && 
-                currentPosition < section.offset + section.height
-            );
-
-            if (active) {
-                setActiveSection(active.id);
-            }
         };
-
         window.addEventListener("scroll", handleScroll);
-        handleScroll();
         return () => window.removeEventListener("scroll", handleScroll);
     }, []);
 
@@ -53,19 +32,6 @@ const Navbar = () => {
             document.body.style.overflow = 'unset';
         }
     }, [isOpen]);
-
-    const scrollToSection = (e, href) => {
-        e.preventDefault();
-        const section = document.querySelector(href);
-        if (section) {
-            const top = section.offsetTop - 100;
-            window.scrollTo({
-                top: top,
-                behavior: "smooth"
-            });
-        }
-        setIsOpen(false);
-    };
 
     return (
         <nav
@@ -81,28 +47,27 @@ const Navbar = () => {
                 <div className="flex items-center justify-between h-16">
                     {/* Logo */}
                     <div className="flex-shrink-0">
-                        <a
-                            href="#Home"
-                            onClick={(e) => scrollToSection(e, "#Home")}
+                        <Link
+                            to="/"
+                            onClick={() => setIsOpen(false)}
                             className="text-2xl font-bold bg-gradient-to-r from-[#bfa37a] to-[#dfcfb9] bg-clip-text text-transparent tracking-widest font-serif"
                         >
                             MIM
-                        </a>
+                        </Link>
                     </div>
         
                     {/* Desktop Navigation */}
                     <div className="hidden md:block">
                         <div className="ml-8 flex items-center space-x-8">
                             {navItems.map((item) => (
-                                <a
+                                <Link
                                     key={item.label}
-                                    href={item.href}
-                                    onClick={(e) => scrollToSection(e, item.href)}
+                                    to={item.path}
                                     className="group relative px-1 py-2 text-sm font-medium"
                                 >
                                     <span
                                         className={`relative z-10 transition-colors duration-300 ${
-                                            activeSection === item.href.substring(1)
+                                            activePath === item.path
                                                 ? "bg-gradient-to-r from-[#bfa37a] to-[#dfcfb9] bg-clip-text text-transparent font-semibold"
                                                 : "text-[#94a3b8] group-hover:text-white"
                                         }`}
@@ -111,12 +76,12 @@ const Navbar = () => {
                                     </span>
                                     <span
                                         className={`absolute bottom-0 left-0 w-full h-0.5 bg-gradient-to-r from-[#bfa37a] to-[#dfcfb9] transform origin-left transition-transform duration-300 ${
-                                            activeSection === item.href.substring(1)
+                                            activePath === item.path
                                                 ? "scale-x-100"
                                                 : "scale-x-0 group-hover:scale-x-100"
                                         }`}
                                     />
-                                </a>
+                                </Link>
                             ))}
                         </div>
                     </div>
@@ -149,12 +114,12 @@ const Navbar = () => {
             >
                 <div className="px-4 py-6 space-y-4">
                     {navItems.map((item, index) => (
-                        <a
+                        <Link
                             key={item.label}
-                            href={item.href}
-                            onClick={(e) => scrollToSection(e, item.href)}
+                            to={item.path}
+                            onClick={() => setIsOpen(false)}
                             className={`block px-4 py-3 text-lg font-medium transition-all duration-300 ease ${
-                                activeSection === item.href.substring(1)
+                                activePath === item.path
                                     ? "bg-gradient-to-r from-[#bfa37a] to-[#dfcfb9] bg-clip-text text-transparent font-semibold"
                                     : "text-[#94a3b8] hover:text-white"
                             }`}
@@ -165,7 +130,7 @@ const Navbar = () => {
                             }}
                         >
                             {item.label}
-                        </a>
+                        </Link>
                     ))}
                 </div>
             </div>

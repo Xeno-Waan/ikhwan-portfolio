@@ -154,7 +154,7 @@ export default function FullWidthTabs() {
   const [value, setValue] = useState(0);
   const [projects, setProjects] = useState(defaultProjects); // Menggunakan defaultProjects sebagai initial state
   const [currentPageProjects, setCurrentPageProjects] = useState(1);
-  const itemsPerPage = 6;
+  const itemsPerPage = 8;
 
   const fetchData = useCallback(async () => {
     if (!supabase) {
@@ -214,12 +214,12 @@ export default function FullWidthTabs() {
       <>
         <div className="container mx-auto flex justify-center items-center overflow-hidden">
           {displayed.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
               {displayed.map((project, index) => (
                 <div
                   key={project.id || index}
-                  data-aos={index % 3 === 0 ? "fade-up-right" : index % 3 === 1 ? "fade-up" : "fade-up-left"}
-                  data-aos-duration={index % 3 === 0 ? "1000" : index % 3 === 1 ? "1200" : "1000"}
+                  data-aos={index % 4 === 0 ? "fade-up-right" : index % 4 === 1 ? "fade-up" : index % 4 === 2 ? "fade-up" : "fade-up-left"}
+                  data-aos-duration={index % 4 === 0 ? "1000" : index % 4 === 1 ? "1100" : index % 4 === 2 ? "1200" : "1000"}
                 >
                   <CardProject
                     Img={project.Img}

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, memo } from "react"
+import { Link } from "react-router-dom"
 import { Github, Linkedin, Mail, ExternalLink, Instagram, Sparkles } from "lucide-react"
 
 // Memoized Components
@@ -43,7 +44,7 @@ const TechStack = memo(({ tech }) => (
 ));
 
 const CTAButton = memo(({ href, text, icon: Icon }) => (
-  <a href={href}>
+  <Link to={href}>
     <button className="group relative w-[160px]">
       <div className="absolute -inset-0.5 bg-gradient-to-r from-[#bfa37a] to-[#dfcfb9] rounded-xl opacity-40 blur-md group-hover:opacity-75 transition-all duration-700"></div>
       <div className="relative h-11 bg-[#050507] backdrop-blur-xl rounded-lg border border-white/10 leading-none overflow-hidden">
@@ -56,7 +57,7 @@ const CTAButton = memo(({ href, text, icon: Icon }) => (
         </span>
       </div>
     </button>
-  </a>
+  </Link>
 ));
 
 const SocialLink = memo(({ icon: Icon, link }) => (
@@ -156,8 +157,8 @@ const Home = () => {
 
                 {/* CTA Buttons */}
                 <div className="flex flex-row gap-3 w-full justify-start">
-                  <CTAButton href="#Projects" text="Projects" icon={ExternalLink} />
-                  <CTAButton href="#Contact" text="Contact" icon={Mail} />
+                  <CTAButton href="/projects" text="Projects" icon={ExternalLink} />
+                  <CTAButton href="/contact" text="Contact" icon={Mail} />
                 </div>
 
                 {/* Social Links */}
