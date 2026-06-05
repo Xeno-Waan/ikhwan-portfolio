@@ -6,8 +6,6 @@ import {
   Youtube,
   ExternalLink,
 } from "lucide-react";
-import AOS from "aos";
-import "aos/dist/aos.css";
 
 const socialLinks = [
   {
@@ -99,12 +97,7 @@ const SocialLinks = () => {
   const otherLinks = socialLinks.filter((link) => !link.isPrimary);
   const [instagram, youtube, github, tiktok] = otherLinks;
 
-  useEffect(() => {
-    AOS.init({
-      offset: 10,
-     
-    });
-  }, []);
+
 
   return (
     <div className="w-full bg-white/[0.02] border border-white/5 rounded-2xl p-6 py-8 backdrop-blur-xl">

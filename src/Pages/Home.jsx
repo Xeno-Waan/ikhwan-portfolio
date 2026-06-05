@@ -1,11 +1,9 @@
 import React, { useState, useEffect, useCallback, memo } from "react"
 import { Github, Linkedin, Mail, ExternalLink, Instagram, Sparkles } from "lucide-react"
-import AOS from 'aos'
-import 'aos/dist/aos.css'
 
 // Memoized Components
 const StatusBadge = memo(() => (
-  <div className="inline-block animate-float lg:mx-0" data-aos="zoom-in" data-aos-delay="400">
+  <div className="inline-block animate-float lg:mx-0">
     <div className="relative group">
       <div className="absolute -inset-0.5 bg-gradient-to-r from-[#bfa37a] to-[#dfcfb9] rounded-full blur opacity-30 group-hover:opacity-50 transition duration-1000"></div>
       <div className="relative px-3 sm:px-4 py-2 rounded-full bg-black/40 backdrop-blur-xl border border-white/10">
@@ -19,7 +17,7 @@ const StatusBadge = memo(() => (
 ));
 
 const MainTitle = memo(() => (
-  <div className="space-y-2" data-aos="fade-up" data-aos-delay="600">
+  <div className="space-y-2">
     <h1 className="text-5xl sm:text-6xl md:text-6xl lg:text-7xl font-bold tracking-tight font-serif leading-tight">
       <span className="relative inline-block">
         <span className="absolute -inset-2 bg-gradient-to-r from-[#bfa37a] to-[#dfcfb9] blur-2xl opacity-10"></span>
@@ -92,20 +90,6 @@ const Home = () => {
   const [isLoaded, setIsLoaded] = useState(false)
   const [isHovering, setIsHovering] = useState(false)
 
-  // Optimize AOS initialization
-  useEffect(() => {
-    const initAOS = () => {
-      AOS.init({
-        once: true,
-        offset: 10,
-      });
-    };
-
-    initAOS();
-    window.addEventListener('resize', initAOS);
-    return () => window.removeEventListener('resize', initAOS);
-  }, []);
-
   useEffect(() => {
     setIsLoaded(true);
     return () => setIsLoaded(false);
@@ -145,15 +129,13 @@ const Home = () => {
         <div className="container mx-auto min-h-screen flex items-center">
           <div className="flex flex-col lg:flex-row items-center justify-center min-h-screen md:justify-between gap-12 lg:gap-20 w-full py-20 lg:py-0">
             {/* Left Column */}
-            <div className="w-full lg:w-1/2 space-y-6 sm:space-y-8 text-left lg:text-left order-1 lg:order-1"
-              data-aos="fade-right"
-              data-aos-delay="200">
+            <div className="w-full lg:w-1/2 space-y-6 sm:space-y-8 text-left lg:text-left order-1 lg:order-1">
               <div className="space-y-4 sm:space-y-6">
                 <StatusBadge />
                 <MainTitle />
 
                 {/* Typing Effect */}
-                <div className="h-8 flex items-center" data-aos="fade-up" data-aos-delay="800">
+                <div className="h-8 flex items-center">
                   <span className="text-xl md:text-2xl bg-gradient-to-r from-gray-100 via-gray-200 to-gray-300 bg-clip-text text-transparent font-light">
                     {text}
                   </span>
@@ -161,27 +143,25 @@ const Home = () => {
                 </div>
 
                 {/* Description */}
-                <p className="text-base md:text-lg text-gray-400 max-w-xl leading-relaxed font-light"
-                  data-aos="fade-up"
-                  data-aos-delay="1000">
+                <p className="text-base md:text-lg text-gray-400 max-w-xl leading-relaxed font-light">
                   Menciptakan aplikasi web yang inovatif, fungsional, dan bernilai tinggi dengan fokus pada performa serta kebersihan kode.
                 </p>
 
                 {/* Tech Stack */}
-                <div className="flex flex-wrap gap-3 justify-start" data-aos="fade-up" data-aos-delay="1200">
+                <div className="flex flex-wrap gap-3 justify-start">
                   {TECH_STACK.map((tech, index) => (
                     <TechStack key={index} tech={tech} />
                   ))}
                 </div>
 
                 {/* CTA Buttons */}
-                <div className="flex flex-row gap-3 w-full justify-start" data-aos="fade-up" data-aos-delay="1400">
+                <div className="flex flex-row gap-3 w-full justify-start">
                   <CTAButton href="#Portofolio" text="Projects" icon={ExternalLink} />
                   <CTAButton href="#Contact" text="Contact" icon={Mail} />
                 </div>
 
                 {/* Social Links */}
-                <div className="hidden sm:flex gap-4 justify-start" data-aos="fade-up" data-aos-delay="1600">
+                <div className="hidden sm:flex gap-4 justify-start">
                   {SOCIAL_LINKS.map((social, index) => (
                     <SocialLink key={index} {...social} />
                   ))}
@@ -192,9 +172,7 @@ const Home = () => {
             {/* Right Column - Premium Framed Profile Picture */}
             <div className="w-full lg:w-1/2 h-auto relative flex items-center justify-center order-2 lg:order-2"
               onMouseEnter={() => setIsHovering(true)}
-              onMouseLeave={() => setIsHovering(false)}
-              data-aos="fade-left"
-              data-aos-delay="600">
+              onMouseLeave={() => setIsHovering(false)}>
               <div className="relative w-72 h-72 sm:w-96 sm:h-96 opacity-95 group">
                 {/* Glowing Aura */}
                 <div className={`absolute -inset-4 bg-gradient-to-r from-[#bfa37a]/15 to-[#dfcfb9]/15 rounded-full blur-3xl transition-all duration-1000 ease-in-out ${

@@ -4,8 +4,6 @@ import { Link } from "react-router-dom";
 import SocialLinks from "../components/SocialLinks";
 import Komentar from "../components/Commentar";
 import Swal from "sweetalert2";
-import AOS from "aos";
-import "aos/dist/aos.css";
 import axios from "axios";
 
 const ContactPage = () => {
@@ -16,11 +14,7 @@ const ContactPage = () => {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  useEffect(() => {
-    AOS.init({
-      once: false,
-    });
-  }, []);
+
 
   const handleChange = (e) => {
     const { name, value } = e.target;
