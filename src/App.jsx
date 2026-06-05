@@ -6,9 +6,14 @@ import About from "./Pages/About";
 import AnimatedBackground from "./components/Background";
 import Navbar from "./components/Navbar";
 import Portofolio from "./Pages/Portofolio";
+import Certificates from "./Pages/Certificates";
+import TechStack from "./Pages/TechStack";
 import ContactPage from "./Pages/Contact";
 import ProjectDetails from "./components/ProjectDetail";
 import NotFoundPage from "./Pages/404";
+import Login from "./Pages/Login";
+import AdminDashboard from "./Pages/AdminDashboard";
+import ProtectedRoute from "./components/ProtectedRoute";
 import AOS from 'aos';
 import 'aos/dist/aos.css';
 
@@ -20,6 +25,8 @@ const LandingPage = () => {
       <Home />
       <About />
       <Portofolio />
+      <Certificates />
+      <TechStack />
       <ContactPage />
       <footer>
         <center>
@@ -69,6 +76,12 @@ function App() {
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/project/:id" element={<ProjectPageLayout />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/admin" element={
+          <ProtectedRoute>
+            <AdminDashboard />
+          </ProtectedRoute>
+        } />
         <Route path="*" element={<NotFoundPage />} /> {/* Ini route 404 */}
       </Routes>
     </BrowserRouter>

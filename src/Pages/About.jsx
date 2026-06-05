@@ -221,7 +221,7 @@ const AboutPage = () => {
                   <FileText className="w-5 h-5" /> Download CV
                 </button>
               </a>
-              <a href="#Portofolio" className="w-full sm:w-auto">
+              <a href="#Projects" className="w-full sm:w-auto">
                 <button 
                   data-aos="fade-up"
                   data-aos-duration="1000"
@@ -236,7 +236,7 @@ const AboutPage = () => {
           <ProfileImage />
         </div>
 
-        <a href="#Portofolio">
+        <a href="#Projects">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-16 cursor-pointer">
             {statsData.map((stat) => (
               <StatCard key={stat.label} {...stat} />

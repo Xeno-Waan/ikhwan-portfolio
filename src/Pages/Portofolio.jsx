@@ -3,6 +3,7 @@ import { supabase } from "../supabase";
 import PropTypes from "prop-types";
 import SwipeableViews from "react-swipeable-views";
 import { useTheme } from "@mui/material/styles";
+import useMediaQuery from "@mui/material/useMediaQuery";
 import AppBar from "@mui/material/AppBar";
 import Tabs from "@mui/material/Tabs";
 import Tab from "@mui/material/Tab";
@@ -11,59 +12,47 @@ import Box from "@mui/material/Box";
 import CardProject from "../components/CardProject";
 import TechStackIcon from "../components/TechStackIcon";
 import Certificate from "../components/Certificate";
-import { Code, Award, Boxes } from "lucide-react";
+import { Code, Award, Boxes, Globe, Palette, Video } from "lucide-react";
 
-const ToggleButton = ({ onClick, isShowingMore }) => (
-  <button
-    onClick={onClick}
-    className="
-      px-3 py-1.5
-      text-slate-300 
-      hover:text-white 
-      text-sm 
-      font-medium 
-      transition-all 
-      duration-300 
-      ease-in-out
-      flex 
-      items-center 
-      gap-2
-      bg-white/5 
-      hover:bg-white/10
-      rounded-md
-      border 
-      border-white/10
-      hover:border-white/20
-      backdrop-blur-sm
-      group
-      relative
-      overflow-hidden
-    "
-  >
-    <span className="relative z-10 flex items-center gap-2">
-      {isShowingMore ? "See Less" : "See More"}
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        width="16"
-        height="16"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        className={`
-          transition-transform 
-          duration-300 
-          ${isShowingMore ? "group-hover:-translate-y-0.5" : "group-hover:translate-y-0.5"}
-        `}
+const Pagination = ({ currentPage, totalPages, onPageChange }) => {
+  if (totalPages <= 1) return null;
+  
+  const pages = Array.from({ length: totalPages }, (_, i) => i + 1);
+
+  return (
+    <div className="flex justify-center items-center gap-2 mt-8">
+      <button
+        onClick={() => onPageChange(Math.max(1, currentPage - 1))}
+        disabled={currentPage === 1}
+        className="p-2 text-slate-400 hover:text-white bg-white/5 border border-white/10 rounded-lg hover:bg-white/10 disabled:opacity-30 disabled:hover:bg-transparent transition duration-200"
       >
-        <polyline points={isShowingMore ? "18 15 12 9 6 15" : "6 9 12 15 18 9"}></polyline>
-      </svg>
-    </span>
-    <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-[#bfa37a]/50 transition-all duration-300 group-hover:w-full"></span>
-  </button>
-);
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+      </button>
+
+      {pages.map((page) => (
+        <button
+          key={page}
+          onClick={() => onPageChange(page)}
+          className={`px-4 py-2 text-sm font-medium rounded-lg border transition duration-200 ${
+            currentPage === page
+              ? "bg-gradient-to-r from-[#bfa37a] to-[#dfcfb9] text-black border-transparent font-semibold shadow-md shadow-[#bfa37a]/10"
+              : "bg-white/5 text-slate-300 border-white/10 hover:bg-white/10 hover:text-white"
+          }`}
+        >
+          {page}
+        </button>
+      ))}
+
+      <button
+        onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
+        disabled={currentPage === totalPages}
+        className="p-2 text-slate-400 hover:text-white bg-white/5 border border-white/10 rounded-lg hover:bg-white/10 disabled:opacity-30 disabled:hover:bg-transparent transition duration-200"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+      </button>
+    </div>
+  );
+};
 
 function TabPanel({ children, value, index, ...other }) {
   return (
@@ -114,35 +103,58 @@ const defaultProjects = [
     Img: "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
     Title: "Sistem Pendaftaran Online SMA Ibnuaqil",
     Description: "Sistem pendaftaran online untuk SMA Ibnuaqil yang memudahkan calon siswa dalam proses pendaftaran secara digital dengan fitur lengkap seperti pengisian formulir online, upload berkas, dan tracking status pendaftaran.",
-    Link: "https://smaibnuaqil.my.id"
+    Link: "https://smaibnuaqil.my.id",
+    Category: "website"
   },
   {
     id: 2,
     Img: "https://images.unsplash.com/photo-1490818387583-1baba5e638af?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
     Title: "NutriKalku - Kalkulator Nilai Gizi Resep Makanan",
     Description: "Aplikasi web untuk menghitung nilai gizi dari resep makanan. Pengguna dapat memasukkan bahan makanan beserta gram-nya, dan sistem akan menghitung total nilai gizi seperti kalori, protein, karbohidrat, dan lemak.",
-    Link: "https://nutrikalku.my.id"
+    Link: "https://nutrikalku.my.id",
+    Category: "website"
   },
   {
     id: 3,
     Img: "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
     Title: "XenoFrame - Pencari Foto Terbaik dalam Video",
     Description: "Website untuk mencari frame/foto terbaik di dalam video. XenoFrame menganalisis video dan mengidentifikasi frame dengan kualitas visual terbaik berdasarkan komposisi, ketajaman, dan estetika. Link: https://xeno-waan.github.io/Xeno---Frame/",
-    Link: "https://xeno-waan.github.io/Xeno---Frame/"
+    Link: "https://xeno-waan.github.io/Xeno---Frame/",
+    Category: "website"
+  },
+  {
+    id: 4,
+    Img: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
+    Title: "Brand Identity - Obsidian Cafe",
+    Description: "A modern visual brand identity concept developed for Obsidian Cafe. Focuses on premium luxury aesthetics using minimal design elements, monochrome schemes, and gold accents.",
+    Link: "",
+    Category: "design"
+  },
+  {
+    id: 5,
+    Img: "https://images.unsplash.com/photo-1536440136628-849c177e76a1?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
+    Title: "Cinematic Travel Reel 2026",
+    Description: "Professional video montage featuring advanced color grading (teal & orange), matching music transitions, and cinematic storytelling principles.",
+    Link: "https://youtube.com",
+    Category: "video"
+  },
+  {
+    id: 6,
+    Img: "https://images.unsplash.com/photo-1555066931-4365d14bab8c?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
+    Title: "Smart Home Controller UI",
+    Description: "An elegant interactive dashboard for controlling smart home appliances, featuring dark mode optimization, dynamic widget adjustments, and real-time power analytics.",
+    Link: "",
+    Category: "design"
   }
 ];
 
 export default function FullWidthTabs() {
   const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const [value, setValue] = useState(0);
   const [projects, setProjects] = useState(defaultProjects); // Menggunakan defaultProjects sebagai initial state
-  const [certificates, setCertificates] = useState([]);
-  const [showAllProjects, setShowAllProjects] = useState(false);
-  const [showAllCertificates, setShowAllCertificates] = useState(false);
-  const isMobile = window.innerWidth < 768;
-  const initialItems = isMobile ? 4 : 6;
-
-
+  const [currentPageProjects, setCurrentPageProjects] = useState(1);
+  const itemsPerPage = 6;
 
   const fetchData = useCallback(async () => {
     if (!supabase) {
@@ -151,70 +163,94 @@ export default function FullWidthTabs() {
       return;
     }
     try {
-      // Mengambil data dari Supabase secara paralel
-      const [projectsResponse, certificatesResponse] = await Promise.all([
-        supabase.from("projects").select("*").order('id', { ascending: true }),
-        supabase.from("certificates").select("*").order('id', { ascending: true }), 
-      ]);
+      const { data, error } = await supabase
+        .from("projects")
+        .select("*")
+        .order('id', { ascending: true });
 
-      // Error handling untuk setiap request
-      if (projectsResponse.error) throw projectsResponse.error;
-      if (certificatesResponse.error) throw certificatesResponse.error;
+      if (error) throw error;
 
-      // Supabase mengembalikan data dalam properti 'data'
-      const projectData = projectsResponse.data || [];
-      const certificateData = certificatesResponse.data || [];
-
-      // Gabungkan data default dengan data dari Supabase
-      // Jika ada data dari Supabase, gunakan itu. Jika tidak, gunakan data default
+      const projectData = data || [];
       const finalProjectData = projectData.length > 0 ? projectData : defaultProjects;
       
       setProjects(finalProjectData);
-      setCertificates(certificateData);
-
-      // Store in localStorage (fungsionalitas ini tetap dipertahankan)
       localStorage.setItem("projects", JSON.stringify(finalProjectData));
-      localStorage.setItem("certificates", JSON.stringify(certificateData));
     } catch (error) {
       console.error("Error fetching data from Supabase:", error.message);
-      // Jika terjadi error, tetap gunakan data default
       setProjects(defaultProjects);
     }
   }, []);
 
   useEffect(() => {
-    // Coba ambil dari localStorage dulu untuk load lebih cepat
     const cachedProjects = localStorage.getItem('projects');
-    const cachedCertificates = localStorage.getItem('certificates');
-
-    if (cachedProjects && cachedCertificates) {
-        setProjects(JSON.parse(cachedProjects));
-        setCertificates(JSON.parse(cachedCertificates));
+    if (cachedProjects) {
+      setProjects(JSON.parse(cachedProjects));
     } else {
-      // Jika tidak ada di cache, gunakan data default
       setProjects(defaultProjects);
     }
-    
-    fetchData(); // Tetap panggil fetchData untuk sinkronisasi data terbaru
+    fetchData();
   }, [fetchData]);
 
   const handleChange = (event, newValue) => {
     setValue(newValue);
+    setCurrentPageProjects(1);
   };
 
-  const toggleShowMore = useCallback((type) => {
-    if (type === 'projects') {
-      setShowAllProjects(prev => !prev);
-    } else {
-      setShowAllCertificates(prev => !prev);
-    }
-  }, []);
+  const getFilteredProjects = (tabValue) => {
+    if (tabValue === 0) return projects;
+    if (tabValue === 1) return projects.filter(p => p.Category?.toLowerCase() === "website");
+    if (tabValue === 2) return projects.filter(p => p.Category?.toLowerCase() === "design");
+    if (tabValue === 3) return projects.filter(p => p.Category?.toLowerCase() === "video");
+    return [];
+  };
 
-  const displayedProjects = showAllProjects ? projects : projects.slice(0, initialItems);
-  const displayedCertificates = showAllCertificates ? certificates : certificates.slice(0, initialItems);
+  const renderProjectGrid = (filtered) => {
+    const displayed = filtered.slice(
+      (currentPageProjects - 1) * itemsPerPage,
+      currentPageProjects * itemsPerPage
+    );
+
+    return (
+      <>
+        <div className="container mx-auto flex justify-center items-center overflow-hidden">
+          {displayed.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {displayed.map((project, index) => (
+                <div
+                  key={project.id || index}
+                  data-aos={index % 3 === 0 ? "fade-up-right" : index % 3 === 1 ? "fade-up" : "fade-up-left"}
+                  data-aos-duration={index % 3 === 0 ? "1000" : index % 3 === 1 ? "1200" : "1000"}
+                >
+                  <CardProject
+                    Img={project.Img}
+                    Title={project.Title}
+                    Description={project.Description}
+                    Link={project.Link}
+                    id={project.id}
+                  />
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-20 text-gray-500 font-light text-sm">
+              No projects in this category yet.
+            </div>
+          )}
+        </div>
+        <Pagination
+          currentPage={currentPageProjects}
+          totalPages={Math.ceil(filtered.length / itemsPerPage)}
+          onPageChange={(page) => {
+            setCurrentPageProjects(page);
+            document.getElementById("Projects")?.scrollIntoView({ behavior: "smooth" });
+          }}
+        />
+      </>
+    );
+  };
 
   return (
-    <div className="md:px-[10%] px-[5%] w-full sm:mt-0 mt-[3rem] bg-[#050507] overflow-hidden" id="Portofolio">
+    <div className="md:px-[10%] px-[5%] w-full py-[6rem] bg-[#050507] overflow-hidden" id="Projects">
       {/* Header section - unchanged */}
       <div className="text-center pb-10" data-aos="fade-up" data-aos-duration="1000">
         <h2 className="inline-block text-3xl md:text-5xl font-bold text-center mx-auto text-transparent bg-clip-text bg-gradient-to-r from-white via-gray-100 to-[#dfcfb9] font-serif">
@@ -225,12 +261,11 @@ export default function FullWidthTabs() {
             backgroundClip: 'text',
             WebkitTextFillColor: 'transparent'
           }}>
-            Portfolio Showcase
+            Projects Showcase
           </span>
         </h2>
         <p className="text-slate-400 max-w-2xl mx-auto text-sm md:text-base mt-2">
-          Explore my journey through projects, certifications, and technical expertise. 
-          Each section represents a milestone in my continuous learning path.
+          Explore my projects across different domains, demonstrating practical implementation and design values.
         </p>
       </div>
 
@@ -265,18 +300,20 @@ export default function FullWidthTabs() {
             onChange={handleChange}
             textColor="secondary"
             indicatorColor="secondary"
-            variant="fullWidth"
+            variant={isMobile ? "scrollable" : "standard"}
+            scrollButtons={isMobile ? "auto" : false}
+            centered={!isMobile}
             sx={{
               minHeight: "70px",
               "& .MuiTab-root": {
-                fontSize: { xs: "0.9rem", md: "1rem" },
+                fontSize: { xs: "0.85rem", md: "0.95rem" },
                 fontWeight: "600",
                 color: "#94a3b8",
                 textTransform: "none",
                 transition: "all 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
-                padding: "20px 0",
+                padding: "20px 16px",
                 zIndex: 1,
-                margin: "8px",
+                margin: "8px 4px",
                 borderRadius: "12px",
                 "&:hover": {
                   color: "#ffffff",
@@ -299,24 +336,29 @@ export default function FullWidthTabs() {
                 height: 0,
               },
               "& .MuiTabs-flexContainer": {
-                gap: "8px",
+                gap: "4px",
               },
             }}
           >
             <Tab
-              icon={<Code className="mb-2 w-5 h-5 transition-all duration-300" />}
-              label="Projects"
+              icon={<Boxes className="mb-2 w-5 h-5 transition-all duration-300" />}
+              label="All"
               {...a11yProps(0)}
             />
             <Tab
-              icon={<Award className="mb-2 w-5 h-5 transition-all duration-300" />}
-              label="Certificates"
+              icon={<Globe className="mb-2 w-5 h-5 transition-all duration-300" />}
+              label="Websites"
               {...a11yProps(1)}
             />
             <Tab
-              icon={<Boxes className="mb-2 w-5 h-5 transition-all duration-300" />}
-              label="Tech Stack"
+              icon={<Palette className="mb-2 w-5 h-5 transition-all duration-300" />}
+              label="Design"
               {...a11yProps(2)}
+            />
+            <Tab
+              icon={<Video className="mb-2 w-5 h-5 transition-all duration-300" />}
+              label="Video"
+              {...a11yProps(3)}
             />
           </Tabs>
         </AppBar>
@@ -324,76 +366,25 @@ export default function FullWidthTabs() {
         <SwipeableViews
           axis={theme.direction === "rtl" ? "x-reverse" : "x"}
           index={value}
-          onChangeIndex={setValue}
+          onChangeIndex={(val) => {
+            setValue(val);
+            setCurrentPageProjects(1);
+          }}
         >
           <TabPanel value={value} index={0} dir={theme.direction}>
-            <div className="container mx-auto flex justify-center items-center overflow-hidden">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 2xl:grid-cols-3 gap-5">
-                {displayedProjects.map((project, index) => (
-                  <div
-                    key={project.id || index}
-                    data-aos={index % 3 === 0 ? "fade-up-right" : index % 3 === 1 ? "fade-up" : "fade-up-left"}
-                    data-aos-duration={index % 3 === 0 ? "1000" : index % 3 === 1 ? "1200" : "1000"}
-                  >
-                    <CardProject
-                      Img={project.Img}
-                      Title={project.Title}
-                      Description={project.Description}
-                      Link={project.Link}
-                      id={project.id}
-                    />
-                  </div>
-                ))}
-              </div>
-            </div>
-            {projects.length > initialItems && (
-              <div className="mt-6 w-full flex justify-start">
-                <ToggleButton
-                  onClick={() => toggleShowMore('projects')}
-                  isShowingMore={showAllProjects}
-                />
-              </div>
-            )}
+            {renderProjectGrid(getFilteredProjects(0))}
           </TabPanel>
 
           <TabPanel value={value} index={1} dir={theme.direction}>
-            <div className="container mx-auto flex justify-center items-center overflow-hidden">
-              <div className="grid grid-cols-1 md:grid-cols-3 md:gap-5 gap-4">
-                {displayedCertificates.map((certificate, index) => (
-                  <div
-                    key={certificate.id || index}
-                    data-aos={index % 3 === 0 ? "fade-up-right" : index % 3 === 1 ? "fade-up" : "fade-up-left"}
-                    data-aos-duration={index % 3 === 0 ? "1000" : index % 3 === 1 ? "1200" : "1000"}
-                  >
-                    <Certificate ImgSertif={certificate.Img} />
-                  </div>
-                ))}
-              </div>
-            </div>
-            {certificates.length > initialItems && (
-              <div className="mt-6 w-full flex justify-start">
-                <ToggleButton
-                  onClick={() => toggleShowMore('certificates')}
-                  isShowingMore={showAllCertificates}
-                />
-              </div>
-            )}
+            {renderProjectGrid(getFilteredProjects(1))}
           </TabPanel>
 
           <TabPanel value={value} index={2} dir={theme.direction}>
-            <div className="container mx-auto flex justify-center items-center overflow-hidden pb-[5%]">
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 lg:gap-8 gap-5">
-                {techStacks.map((stack, index) => (
-                  <div
-                    key={index}
-                    data-aos={index % 3 === 0 ? "fade-up-right" : index % 3 === 1 ? "fade-up" : "fade-up-left"}
-                    data-aos-duration={index % 3 === 0 ? "1000" : index % 3 === 1 ? "1200" : "1000"}
-                  >
-                    <TechStackIcon TechStackIcon={stack.icon} Language={stack.language} />
-                  </div>
-                ))}
-              </div>
-            </div>
+            {renderProjectGrid(getFilteredProjects(2))}
+          </TabPanel>
+
+          <TabPanel value={value} index={3} dir={theme.direction}>
+            {renderProjectGrid(getFilteredProjects(3))}
           </TabPanel>
         </SwipeableViews>
       </Box>
