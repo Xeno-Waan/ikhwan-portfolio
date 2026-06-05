@@ -261,6 +261,7 @@ export default function FullWidthTabs() {
                     Description={project.Description}
                     Link={project.Link}
                     id={project.id}
+                    Category={project.Category}
                   />
                 </div>
               ))}
