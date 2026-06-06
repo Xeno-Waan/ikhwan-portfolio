@@ -14,46 +14,6 @@ import TechStackIcon from "../components/TechStackIcon";
 import Certificate from "../components/Certificate";
 import { Code, Award, Boxes, Globe, Palette, Video } from "lucide-react";
 
-const Pagination = ({ currentPage, totalPages, onPageChange }) => {
-  if (totalPages <= 1) return null;
-  
-  const pages = Array.from({ length: totalPages }, (_, i) => i + 1);
-
-  return (
-    <div className="flex justify-center items-center gap-2 mt-8">
-      <button
-        onClick={() => onPageChange(Math.max(1, currentPage - 1))}
-        disabled={currentPage === 1}
-        className="p-2 text-slate-400 hover:text-white bg-white/5 border border-white/10 rounded-lg hover:bg-white/10 disabled:opacity-30 disabled:hover:bg-transparent transition duration-200"
-      >
-        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
-      </button>
-
-      {pages.map((page) => (
-        <button
-          key={page}
-          onClick={() => onPageChange(page)}
-          className={`px-4 py-2 text-sm font-medium rounded-lg border transition duration-200 ${
-            currentPage === page
-              ? "bg-gradient-to-r from-[#bfa37a] to-[#dfcfb9] text-black border-transparent font-semibold shadow-md shadow-[#bfa37a]/10"
-              : "bg-white/5 text-slate-300 border-white/10 hover:bg-white/10 hover:text-white"
-          }`}
-        >
-          {page}
-        </button>
-      ))}
-
-      <button
-        onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
-        disabled={currentPage === totalPages}
-        className="p-2 text-slate-400 hover:text-white bg-white/5 border border-white/10 rounded-lg hover:bg-white/10 disabled:opacity-30 disabled:hover:bg-transparent transition duration-200"
-      >
-        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
-      </button>
-    </div>
-  );
-};
-
 function TabPanel({ children, value, index, ...other }) {
   return (
     <div
@@ -85,7 +45,6 @@ function a11yProps(index) {
   };
 }
 
-// techStacks tetap sama
 const techStacks = [
   { icon: "html.svg", language: "HTML" },
   { icon: "css.svg", language: "CSS" },
@@ -96,7 +55,6 @@ const techStacks = [
   { icon: "vercel.svg", language: "Vercel" },
 ];
 
-// Data proyek default yang akan ditampilkan jika Supabase tidak tersedia
 const defaultProjects = [
   {
     id: 1,
@@ -167,10 +125,8 @@ export default function FullWidthTabs() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const [value, setValue] = useState(0);
-  const [projects, setProjects] = useState(defaultProjects); // Menggunakan defaultProjects sebagai initial state
+  const [projects, setProjects] = useState(defaultProjects); 
   const [certificates, setCertificates] = useState(defaultCertificates);
-  const [currentPageProjects, setCurrentPageProjects] = useState(1);
-  const itemsPerPage = 8;
 
   const fetchData = useCallback(async () => {
     if (!supabase) {
@@ -222,7 +178,6 @@ export default function FullWidthTabs() {
 
   const handleChange = (event, newValue) => {
     setValue(newValue);
-    setCurrentPageProjects(1);
   };
 
   const getFilteredProjects = (tabValue) => {
@@ -233,60 +188,40 @@ export default function FullWidthTabs() {
     return [];
   };
 
-  const displayedCertificates = certificates.slice(
-    (currentPageProjects - 1) * itemsPerPage,
-    currentPageProjects * itemsPerPage
-  );
-
   const renderProjectGrid = (filtered) => {
-    const displayed = filtered.slice(
-      (currentPageProjects - 1) * itemsPerPage,
-      currentPageProjects * itemsPerPage
-    );
-
     return (
-      <>
-        <div className="container mx-auto flex justify-center items-center overflow-hidden">
-          {displayed.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
-              {displayed.map((project, index) => (
-                <div
-                  key={project.id || index}
-                  data-aos={index % 4 === 0 ? "fade-up-right" : index % 4 === 1 ? "fade-up" : index % 4 === 2 ? "fade-up" : "fade-up-left"}
-                  data-aos-duration={index % 4 === 0 ? "1000" : index % 4 === 1 ? "1100" : index % 4 === 2 ? "1200" : "1000"}
-                >
-                  <CardProject
-                    Img={project.Img}
-                    Title={project.Title}
-                    Description={project.Description}
-                    Link={project.Link}
-                    id={project.id}
-                    Category={project.Category}
-                  />
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-20 text-gray-500 font-light text-sm">
-              No projects in this category yet.
-            </div>
-          )}
-        </div>
-        <Pagination
-          currentPage={currentPageProjects}
-          totalPages={Math.ceil(filtered.length / itemsPerPage)}
-          onPageChange={(page) => {
-            setCurrentPageProjects(page);
-            document.getElementById("Projects")?.scrollIntoView({ behavior: "smooth" });
-          }}
-        />
-      </>
+      <div className="container mx-auto flex justify-center items-center overflow-hidden">
+        {filtered.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 w-full">
+            {filtered.map((project, index) => (
+              <div
+                key={project.id || index}
+                data-aos={index % 4 === 0 ? "fade-up-right" : index % 4 === 1 ? "fade-up" : index % 4 === 2 ? "fade-up" : "fade-up-left"}
+                data-aos-duration={index % 4 === 0 ? "1000" : index % 4 === 1 ? "1100" : index % 4 === 2 ? "1200" : "1000"}
+              >
+                <CardProject
+                  Img={project.Img}
+                  Title={project.Title}
+                  Description={project.Description}
+                  Link={project.Link}
+                  id={project.id}
+                  Category={project.Category}
+                />
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-20 text-gray-500 font-light text-sm">
+            No projects in this category yet.
+          </div>
+        )}
+      </div>
     );
   };
 
   return (
     <div className="md:px-[10%] px-[5%] w-full py-[6rem] bg-[#050507] overflow-hidden" id="Projects">
-      {/* Header section - unchanged */}
+      {/* Header section */}
       <div className="text-center pb-10" data-aos="fade-up" data-aos-duration="1000">
         <h2 className="inline-block text-3xl md:text-5xl font-bold text-center mx-auto text-transparent bg-clip-text bg-gradient-to-r from-white via-gray-100 to-[#dfcfb9] font-serif">
           <span style={{
@@ -305,7 +240,6 @@ export default function FullWidthTabs() {
       </div>
 
       <Box sx={{ width: "100%" }}>
-        {/* AppBar and Tabs section - unchanged */}
         <AppBar
           position="static"
           elevation={0}
@@ -329,7 +263,6 @@ export default function FullWidthTabs() {
           }}
           className="md:px-4"
         >
-          {/* Tabs remain unchanged */}
           <Tabs
             value={value}
             onChange={handleChange}
@@ -408,7 +341,6 @@ export default function FullWidthTabs() {
           index={value}
           onChangeIndex={(val) => {
             setValue(val);
-            setCurrentPageProjects(1);
           }}
         >
           <TabPanel value={value} index={0} dir={theme.direction}>
@@ -429,9 +361,9 @@ export default function FullWidthTabs() {
 
           <TabPanel value={value} index={4} dir={theme.direction}>
             <div className="container mx-auto flex justify-center items-center overflow-hidden">
-              {displayedCertificates.length > 0 ? (
+              {certificates.length > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 w-full">
-                  {displayedCertificates.map((certificate, index) => (
+                  {certificates.map((certificate, index) => (
                     <div
                       key={certificate.id || index}
                       data-aos={index % 4 === 0 ? "fade-up-right" : index % 4 === 1 ? "fade-up" : index % 4 === 2 ? "fade-up" : "fade-up-left"}
@@ -448,14 +380,6 @@ export default function FullWidthTabs() {
                 </div>
               )}
             </div>
-            <Pagination
-              currentPage={currentPageProjects}
-              totalPages={Math.ceil(certificates.length / itemsPerPage)}
-              onPageChange={(page) => {
-                setCurrentPageProjects(page);
-                document.getElementById("Projects")?.scrollIntoView({ behavior: "smooth" });
-              }}
-            />
           </TabPanel>
         </SwipeableViews>
       </Box>
