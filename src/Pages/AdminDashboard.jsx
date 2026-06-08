@@ -32,7 +32,7 @@ const AdminDashboard = () => {
   // Modal State
   const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
   const [isCertModalOpen, setIsCertModalOpen] = useState(false);
-  const [currentProject, setCurrentProject] = useState({ id: null, Title: "", Description: "", Link: "", Img: "", Category: "project" });
+  const [currentProject, setCurrentProject] = useState({ id: null, Title: "", Description: "", Link: "", Img: "", Category: "website", Github: "", Features: "", TechStack: "" });
   const [currentCert, setCurrentCert] = useState({ id: null, Img: "" });
   const [uploadFile, setUploadFile] = useState(null);
   const [uploadingFile, setUploadingFile] = useState(false);
@@ -139,14 +139,17 @@ const AdminDashboard = () => {
   };
 
   // ==================== PROJECTS CRUD ====================
-  const openProjectModal = (proj = { id: null, Title: "", Description: "", Link: "", Img: "", Category: "project" }) => {
+  const openProjectModal = (proj = { id: null, Title: "", Description: "", Link: "", Img: "", Category: "website", Github: "", Features: [], TechStack: [] }) => {
     setCurrentProject({
       id: proj.id || null,
       Title: proj.Title || "",
       Description: proj.Description || "",
       Link: proj.Link || "",
       Img: proj.Img || "",
-      Category: proj.Category || "project"
+      Category: proj.Category || "website",
+      Github: proj.Github || "",
+      Features: Array.isArray(proj.Features) ? proj.Features.join("\n") : (proj.Features || ""),
+      TechStack: Array.isArray(proj.TechStack) ? proj.TechStack.join(", ") : (proj.TechStack || "")
     });
     setUploadFile(null);
     setIsProjectModalOpen(true);
@@ -174,7 +177,14 @@ const AdminDashboard = () => {
         Description: currentProject.Description,
         Link: currentProject.Link,
         Img: imageUrl,
-        Category: currentProject.Category || "project"
+        Category: currentProject.Category || "website",
+        Github: currentProject.Github || "Private",
+        Features: typeof currentProject.Features === "string" 
+          ? currentProject.Features.split("\n").map(f => f.trim()).filter(Boolean) 
+          : [],
+        TechStack: typeof currentProject.TechStack === "string"
+          ? currentProject.TechStack.split(",").map(t => t.trim()).filter(Boolean)
+          : []
       };
 
       if (currentProject.id) {
@@ -695,6 +705,48 @@ const AdminDashboard = () => {
                 />
               </div>
 
+              {/* Github Repository Link */}
+              <div className="space-y-2">
+                <label className="text-xs font-semibold text-gray-300 uppercase tracking-wider flex items-center gap-1.5">
+                  <Globe className="w-3.5 h-3.5" /> Github Repository Link (Optional)
+                </label>
+                <input
+                  type="text"
+                  value={currentProject.Github}
+                  onChange={(e) => setCurrentProject({ ...currentProject, Github: e.target.value })}
+                  placeholder="https://github.com/... or 'Private'"
+                  className="block w-full px-4 py-3 border border-white/10 rounded-xl bg-black/40 text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-[#bfa37a] focus:border-[#bfa37a] text-sm"
+                />
+              </div>
+
+              {/* Tech Stack */}
+              <div className="space-y-2">
+                <label className="text-xs font-semibold text-gray-300 uppercase tracking-wider">
+                  Tech Stack (separated by commas)
+                </label>
+                <input
+                  type="text"
+                  value={currentProject.TechStack}
+                  onChange={(e) => setCurrentProject({ ...currentProject, TechStack: e.target.value })}
+                  placeholder="React, Tailwind, JavaScript"
+                  className="block w-full px-4 py-3 border border-white/10 rounded-xl bg-black/40 text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-[#bfa37a] focus:border-[#bfa37a] text-sm"
+                />
+              </div>
+
+              {/* Key Features */}
+              <div className="space-y-2">
+                <label className="text-xs font-semibold text-gray-300 uppercase tracking-wider">
+                  Key Features (one feature per line)
+                </label>
+                <textarea
+                  value={currentProject.Features}
+                  onChange={(e) => setCurrentProject({ ...currentProject, Features: e.target.value })}
+                  placeholder="Feature A&#10;Feature B&#10;Feature C"
+                  rows={3}
+                  className="block w-full px-4 py-3 border border-white/10 rounded-xl bg-[#000000]/40 text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-[#bfa37a] focus:border-[#bfa37a] text-sm"
+                />
+              </div>
+
               {/* Category */}
               <div className="space-y-2">
                 <label className="text-xs font-semibold text-gray-300 uppercase tracking-wider">Category</label>
@@ -704,7 +756,6 @@ const AdminDashboard = () => {
                   className="block w-full px-4 py-3 border border-white/10 rounded-xl bg-black/40 text-white focus:outline-none focus:ring-1 focus:ring-[#bfa37a] focus:border-[#bfa37a] text-sm"
                   required
                 >
-                  <option value="project" className="bg-[#0a0a0c]">General Project</option>
                   <option value="website" className="bg-[#0a0a0c]">Website</option>
                   <option value="design" className="bg-[#0a0a0c]">Design</option>
                   <option value="video" className="bg-[#0a0a0c]">Video</option>
