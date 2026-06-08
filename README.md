@@ -98,6 +98,7 @@ CREATE TABLE public.projects (
   "Img" text,
   "Link" text,
   "Github" text,
+  "Category" text DEFAULT 'website',
   "Features" jsonb,
   "TechStack" jsonb
 );

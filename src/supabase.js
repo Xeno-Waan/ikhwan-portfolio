@@ -14,30 +14,4 @@ if (!supabaseUrl || !supabaseKey) {
     console.error("Failed to initialize Supabase client:", error);
   }
 }
-// Temporary Mock for Local Verification of Admin Dashboard
-if (supabaseInstance) {
-  supabaseInstance.auth.getSession = async () => {
-    return {
-      data: {
-        session: {
-          user: { email: "admin.ikhwan@gmail.com" }
-        }
-      },
-      error: null
-    };
-  };
-  supabaseInstance.auth.signInWithPassword = async ({ email, password }) => {
-    return {
-      data: {
-        user: { email: "admin.ikhwan@gmail.com" },
-        session: { user: { email: "admin.ikhwan@gmail.com" } }
-      },
-      error: null
-    };
-  };
-  supabaseInstance.auth.signOut = async () => {
-    return { error: null };
-  };
-}
-
 export const supabase = supabaseInstance;
