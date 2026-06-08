@@ -185,6 +185,9 @@ const AboutPage = () => {
     const cached = localStorage.getItem("certificates");
     return cached ? JSON.parse(cached) : defaultCertificates;
   });
+  const [experienceStartDate, setExperienceStartDate] = useState(() => {
+    return localStorage.getItem("experienceStartDate") || "2021-11-06";
+  });
 
   const fetchData = useCallback(async () => {
     if (!supabase) return;
@@ -195,7 +198,18 @@ const AboutPage = () => {
       ]);
 
       if (!projectsResponse.error && projectsResponse.data) {
-        const projectData = projectsResponse.data || [];
+        const rawProjects = projectsResponse.data || [];
+        
+        // Find setting record
+        const settingRecord = rawProjects.find(p => p.Category === "setting" && p.Title === "experience_start_date");
+        if (settingRecord) {
+          setExperienceStartDate(settingRecord.Description);
+          localStorage.setItem("experienceStartDate", settingRecord.Description);
+        }
+
+        // Filter projects
+        const projectData = rawProjects.filter(p => p.Category !== "setting");
+        
         const hasCategories = projectData.some(p => p.Category);
         const isPlaceholderOnly = projectData.length === 0 || 
           (projectData.length === 1 && projectData[0].Title === "Proyek Pertama Saya") ||
@@ -226,10 +240,18 @@ const AboutPage = () => {
     const videoProjects = projects.filter(p => p.Category?.toLowerCase() === "video").length;
     const totalCertificates = certificates.length;
 
-    const startDate = new Date("2021-11-06");
-    const today = new Date();
-    const experience = today.getFullYear() - startDate.getFullYear() -
-      (today < new Date(today.getFullYear(), startDate.getMonth(), startDate.getDate()) ? 1 : 0);
+    let experience = 4;
+    const num = parseInt(experienceStartDate, 10);
+    if (!isNaN(num) && num.toString() === experienceStartDate?.toString().trim()) {
+      experience = num;
+    } else {
+      const startDate = new Date(experienceStartDate || "2021-11-06");
+      const today = new Date();
+      if (!isNaN(startDate.getTime())) {
+        experience = today.getFullYear() - startDate.getFullYear() -
+          (today < new Date(today.getFullYear(), startDate.getMonth(), startDate.getDate()) ? 1 : 0);
+      }
+    }
 
     return {
       totalProjects,
@@ -239,7 +261,7 @@ const AboutPage = () => {
       totalCertificates,
       experience
     };
-  }, [projects, certificates]);
+  }, [projects, certificates, experienceStartDate]);
 
   // Data statistik memoized
   const statsData = useMemo(() => [

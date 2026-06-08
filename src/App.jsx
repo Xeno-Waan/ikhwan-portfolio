@@ -62,6 +62,7 @@ function App() {
         <Route path="/" element={<PageLayout><Home /></PageLayout>} />
         <Route path="/about" element={<PageLayout><About /></PageLayout>} />
         <Route path="/projects" element={<PageLayout><Portofolio /></PageLayout>} />
+        <Route path="/certificates" element={<PageLayout><Certificates /></PageLayout>} />
         <Route path="/tech-stack" element={<PageLayout><TechStack /></PageLayout>} />
         <Route path="/contact" element={<PageLayout><ContactPage /></PageLayout>} />
         <Route path="/project/:id" element={<PageLayout><ProjectDetails /></PageLayout>} />

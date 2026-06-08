@@ -16,18 +16,25 @@ import {
   ChevronLeft,
   Loader2,
   FileImage,
-  Globe
+  Globe,
+  Palette,
+  Video,
+  Settings
 } from "lucide-react";
 import Swal from "sweetalert2";
 
 const AdminDashboard = () => {
-  const [activeTab, setActiveTab] = useState("projects");
+  const [activeTab, setActiveTab] = useState("website");
   const [projects, setProjects] = useState([]);
   const [certificates, setCertificates] = useState([]);
   const [comments, setComments] = useState([]);
   const [loading, setLoading] = useState(false);
   const [userEmail, setUserEmail] = useState("");
   const navigate = useNavigate();
+
+  // Settings state
+  const [experienceSetting, setExperienceSetting] = useState(null);
+  const [experienceValue, setExperienceValue] = useState("2021-11-06");
 
   // Modal State
   const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
@@ -64,9 +71,18 @@ const AdminDashboard = () => {
       if (certRes.error) throw certRes.error;
       if (commRes.error) throw commRes.error;
 
-      setProjects(projRes.data || []);
+      const allProjects = projRes.data || [];
+      const filteredProjects = allProjects.filter(p => p.Category !== "setting");
+      const settingProj = allProjects.find(p => p.Category === "setting" && p.Title === "experience_start_date");
+
+      setProjects(filteredProjects);
       setCertificates(certRes.data || []);
       setComments(commRes.data || []);
+
+      if (settingProj) {
+        setExperienceSetting(settingProj);
+        setExperienceValue(settingProj.Description);
+      }
     } catch (error) {
       console.error("Error loading admin data:", error);
       Swal.fire({
@@ -139,14 +155,15 @@ const AdminDashboard = () => {
   };
 
   // ==================== PROJECTS CRUD ====================
-  const openProjectModal = (proj = { id: null, Title: "", Description: "", Link: "", Img: "", Category: "website", Github: "", Features: [], TechStack: [] }) => {
+  const openProjectModal = (proj = {}) => {
+    const defaultCategory = ["website", "design", "video"].includes(activeTab) ? activeTab : "website";
     setCurrentProject({
       id: proj.id || null,
       Title: proj.Title || "",
       Description: proj.Description || "",
       Link: proj.Link || "",
       Img: proj.Img || "",
-      Category: proj.Category || "website",
+      Category: proj.Category || defaultCategory,
       Github: proj.Github || "",
       Features: Array.isArray(proj.Features) ? proj.Features.join("\n") : (proj.Features || ""),
       TechStack: Array.isArray(proj.TechStack) ? proj.TechStack.join(", ") : (proj.TechStack || "")
@@ -376,6 +393,55 @@ const AdminDashboard = () => {
     }
   };
 
+  const saveExperienceSetting = async (val) => {
+    setLoading(true);
+    try {
+      const payload = {
+        Title: "experience_start_date",
+        Description: val,
+        Category: "setting",
+        Img: "https://placehold.co/600x400", // dummy value
+        Link: "",
+        Github: "Private",
+        Features: [],
+        TechStack: []
+      };
+
+      if (experienceSetting && experienceSetting.id) {
+        const { error } = await supabase
+          .from("projects")
+          .update(payload)
+          .eq("id", experienceSetting.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from("projects")
+          .insert([payload]);
+        if (error) throw error;
+      }
+
+      Swal.fire({
+        icon: "success",
+        title: "Settings Saved",
+        timer: 1500,
+        showConfirmButton: false,
+        background: "#0a0a0c",
+        color: "#fff"
+      });
+      loadAllData();
+    } catch (error) {
+      Swal.fire({
+        icon: "error",
+        title: "Save Failed",
+        text: error.message,
+        background: "#0a0a0c",
+        color: "#fff"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#050507] text-white flex flex-col md:flex-row relative">
       {/* Background grids & blur */}
@@ -408,15 +474,39 @@ const AdminDashboard = () => {
           {/* Navigation Items */}
           <nav className="space-y-2">
             <button
-              onClick={() => setActiveTab("projects")}
+              onClick={() => setActiveTab("website")}
               className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 font-medium ${
-                activeTab === "projects"
+                activeTab === "website"
                   ? "bg-gradient-to-r from-[#bfa37a]/20 to-[#dfcfb9]/20 border-l-4 border-[#bfa37a] text-white shadow-lg shadow-[#bfa37a]/5"
                   : "text-gray-400 hover:text-white hover:bg-white/5"
               }`}
             >
-              <FolderGit2 className="w-5 h-5 text-[#bfa37a]" />
-              Projects
+              <Globe className="w-5 h-5 text-[#bfa37a]" />
+              Website
+            </button>
+
+            <button
+              onClick={() => setActiveTab("design")}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 font-medium ${
+                activeTab === "design"
+                  ? "bg-gradient-to-r from-[#bfa37a]/20 to-[#dfcfb9]/20 border-l-4 border-[#bfa37a] text-white shadow-lg shadow-[#bfa37a]/5"
+                  : "text-gray-400 hover:text-white hover:bg-white/5"
+              }`}
+            >
+              <Palette className="w-5 h-5 text-[#bfa37a]" />
+              Design
+            </button>
+
+            <button
+              onClick={() => setActiveTab("video")}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 font-medium ${
+                activeTab === "video"
+                  ? "bg-gradient-to-r from-[#bfa37a]/20 to-[#dfcfb9]/20 border-l-4 border-[#bfa37a] text-white shadow-lg shadow-[#bfa37a]/5"
+                  : "text-gray-400 hover:text-white hover:bg-white/5"
+              }`}
+            >
+              <Video className="w-5 h-5 text-[#bfa37a]" />
+              Video
             </button>
 
             <button
@@ -442,6 +532,18 @@ const AdminDashboard = () => {
               <MessageSquare className="w-5 h-5 text-[#bfa37a]" />
               Comments
             </button>
+
+            <button
+              onClick={() => setActiveTab("settings")}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 font-medium ${
+                activeTab === "settings"
+                  ? "bg-gradient-to-r from-[#bfa37a]/20 to-[#dfcfb9]/20 border-l-4 border-[#bfa37a] text-white shadow-lg shadow-[#bfa37a]/5"
+                  : "text-gray-400 hover:text-white hover:bg-white/5"
+              }`}
+            >
+              <Settings className="w-5 h-5 text-[#bfa37a]" />
+              Settings
+            </button>
           </nav>
         </div>
 
@@ -459,13 +561,15 @@ const AdminDashboard = () => {
       <main className="flex-1 p-6 md:p-10 z-10 max-w-5xl mx-auto w-full overflow-y-auto">
         <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-white/5 pb-6 mb-8 gap-4">
           <div>
-            <h2 className="text-3xl font-bold font-serif capitalize">{activeTab}</h2>
+            <h2 className="text-3xl font-bold font-serif capitalize">
+              {activeTab === "website" ? "Website Projects" : activeTab === "design" ? "Design Projects" : activeTab === "video" ? "Video Projects" : activeTab}
+            </h2>
             <p className="text-gray-400 text-sm mt-1">
-              Add, update, or remove {activeTab} shown on your live portfolio.
+              {activeTab === "settings" ? "Configure your portfolio website settings and experience metrics." : `Add, update, or remove ${activeTab} content shown on your live portfolio.`}
             </p>
           </div>
           
-          {activeTab === "projects" && (
+          {["website", "design", "video"].includes(activeTab) && (
             <button
               onClick={() => openProjectModal()}
               className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#bfa37a] to-[#dfcfb9] text-black font-semibold text-sm hover:opacity-90 transition duration-300 shadow-md shadow-[#bfa37a]/15"
@@ -492,63 +596,65 @@ const AdminDashboard = () => {
         )}
 
         {/* TAB PROJECTS */}
-        {activeTab === "projects" && !loading && (
+        {["website", "design", "video"].includes(activeTab) && !loading && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {projects.map((project) => (
-              <div key={project.id} className="group relative rounded-xl border border-white/10 bg-black/40 p-5 backdrop-blur-md hover:border-[#bfa37a]/30 transition-all duration-300 flex flex-col justify-between">
-                <div className="space-y-4">
-                  {/* Image Preview */}
-                  <div className="aspect-video w-full rounded-lg overflow-hidden bg-slate-900 border border-white/5 relative">
-                    <img 
-                      src={project.Img} 
-                      alt={project.Title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                    />
-                  </div>
-                  
-                  {/* Text Details */}
-                  <div className="space-y-2">
-                    <div className="flex justify-between items-start gap-4">
-                      <h3 className="text-xl font-semibold text-[#dfcfb9] font-serif tracking-wide">{project.Title}</h3>
-                      <span className="text-[10px] uppercase font-semibold tracking-wider px-2 py-0.5 rounded border border-white/10 bg-white/5 text-gray-400 flex-shrink-0">
-                        {project.Category || "project"}
-                      </span>
+            {projects
+              .filter((project) => project.Category?.toLowerCase() === activeTab)
+              .map((project) => (
+                <div key={project.id} className="group relative rounded-xl border border-white/10 bg-black/40 p-5 backdrop-blur-md hover:border-[#bfa37a]/30 transition-all duration-300 flex flex-col justify-between">
+                  <div className="space-y-4">
+                    {/* Image Preview */}
+                    <div className="aspect-video w-full rounded-lg overflow-hidden bg-slate-900 border border-white/5 relative">
+                      <img 
+                        src={project.Img} 
+                        alt={project.Title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      />
                     </div>
-                    <p className="text-gray-400 text-sm leading-relaxed line-clamp-3 font-light">{project.Description}</p>
-                    {project.Link && (
-                      <a 
-                        href={project.Link} 
-                        target="_blank" 
-                        rel="noreferrer"
-                        className="inline-flex items-center gap-1.5 text-xs text-[#bfa37a] hover:underline"
-                      >
-                        Live Demo <ExternalLink className="w-3 h-3" />
-                      </a>
-                    )}
+                    
+                    {/* Text Details */}
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-start gap-4">
+                        <h3 className="text-xl font-semibold text-[#dfcfb9] font-serif tracking-wide">{project.Title}</h3>
+                        <span className="text-[10px] uppercase font-semibold tracking-wider px-2 py-0.5 rounded border border-white/10 bg-white/5 text-gray-400 flex-shrink-0">
+                          {project.Category || "project"}
+                        </span>
+                      </div>
+                      <p className="text-gray-400 text-sm leading-relaxed line-clamp-3 font-light">{project.Description}</p>
+                      {project.Link && (
+                        <a 
+                          href={project.Link} 
+                          target="_blank" 
+                          rel="noreferrer"
+                          className="inline-flex items-center gap-1.5 text-xs text-[#bfa37a] hover:underline"
+                        >
+                          Live Demo <ExternalLink className="w-3 h-3" />
+                        </a>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Card Controls */}
+                  <div className="flex items-center gap-3 mt-6 border-t border-white/5 pt-4">
+                    <button
+                      onClick={() => openProjectModal(project)}
+                      className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 text-xs transition duration-200"
+                    >
+                      <Edit className="w-3.5 h-3.5" /> Edit Details
+                    </button>
+                    <button
+                      onClick={() => deleteProject(project.id)}
+                      className="flex items-center justify-center gap-2 px-3.5 py-2 rounded-lg bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 text-red-400 text-xs transition duration-200"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
                   </div>
                 </div>
+              ))}
 
-                {/* Card Controls */}
-                <div className="flex items-center gap-3 mt-6 border-t border-white/5 pt-4">
-                  <button
-                    onClick={() => openProjectModal(project)}
-                    className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 text-xs transition duration-200"
-                  >
-                    <Edit className="w-3.5 h-3.5" /> Edit Details
-                  </button>
-                  <button
-                    onClick={() => deleteProject(project.id)}
-                    className="flex items-center justify-center gap-2 px-3.5 py-2 rounded-lg bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 text-red-400 text-xs transition duration-200"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              </div>
-            ))}
-
-            {projects.length === 0 && (
+            {projects.filter((project) => project.Category?.toLowerCase() === activeTab).length === 0 && (
               <div className="col-span-2 text-center py-20 text-gray-500 border border-dashed border-white/10 rounded-2xl">
-                No projects found. Add your first project using the button above.
+                No {activeTab} projects found. Add your first project using the button above.
               </div>
             )}
           </div>
@@ -645,6 +751,58 @@ const AdminDashboard = () => {
                 No visitor comments found.
               </div>
             )}
+          </div>
+        )}
+
+        {/* TAB SETTINGS */}
+        {activeTab === "settings" && !loading && (
+          <div className="max-w-xl rounded-xl border border-white/10 bg-black/40 p-6 backdrop-blur-md hover:border-[#bfa37a]/30 transition-all duration-300 font-sans">
+            <h3 className="text-xl font-bold font-serif mb-4 text-[#dfcfb9]">Years of Experience</h3>
+            <p className="text-gray-400 text-sm mb-6 leading-relaxed">
+              Adjust the starting date of your experience. The system will dynamically calculate the years of experience shown on the public site. You can also type a direct number (e.g. "5") if you prefer a fixed count.
+            </p>
+            
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-xs font-semibold text-gray-300 uppercase tracking-wider block">Start Date / Numeric Value</label>
+                <input
+                  type="text"
+                  value={experienceValue}
+                  onChange={(e) => setExperienceValue(e.target.value)}
+                  placeholder="YYYY-MM-DD or numeric value (e.g. 2021-11-06 or 5)"
+                  className="block w-full px-4 py-3 border border-white/10 rounded-xl bg-black/40 text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-[#bfa37a] focus:border-[#bfa37a] text-sm"
+                />
+              </div>
+
+              {/* Live Preview */}
+              <div className="p-4 rounded-lg bg-white/5 border border-white/5 space-y-1">
+                <span className="text-[11px] text-gray-500 uppercase tracking-wider block font-semibold">Live Preview on Site</span>
+                <span className="text-lg font-serif font-bold text-white">
+                  {(() => {
+                    const num = parseInt(experienceValue, 10);
+                    if (!isNaN(num) && num.toString() === experienceValue?.toString().trim()) {
+                      return `${num} Years of Experience`;
+                    }
+                    const date = new Date(experienceValue);
+                    if (!isNaN(date.getTime())) {
+                      const today = new Date();
+                      const computed = today.getFullYear() - date.getFullYear() -
+                        (today < new Date(today.getFullYear(), date.getMonth(), date.getDate()) ? 1 : 0);
+                      return `${computed} Years of Experience (Calculated)`;
+                    }
+                    return "Invalid input (will fall back to 4 Years)";
+                  })()}
+                </span>
+              </div>
+
+              <button
+                onClick={() => saveExperienceSetting(experienceValue)}
+                disabled={loading}
+                className="w-full flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#bfa37a] to-[#dfcfb9] text-black font-semibold text-sm hover:opacity-90 transition duration-300 shadow-md shadow-[#bfa37a]/15 disabled:opacity-50"
+              >
+                {loading ? "Saving..." : "Save Settings"}
+              </button>
+            </div>
           </div>
         )}
       </main>
