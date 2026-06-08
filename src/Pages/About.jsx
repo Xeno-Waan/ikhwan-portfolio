@@ -195,9 +195,14 @@ const AboutPage = () => {
       ]);
 
       if (!projectsResponse.error && projectsResponse.data) {
-        const pData = projectsResponse.data.length > 0 ? projectsResponse.data : defaultProjects;
-        setProjects(pData);
-        localStorage.setItem("projects", JSON.stringify(pData));
+        const projectData = projectsResponse.data || [];
+        const hasCategories = projectData.some(p => p.Category);
+        const isPlaceholderOnly = projectData.length === 0 || 
+          (projectData.length === 1 && projectData[0].Title === "Proyek Pertama Saya") ||
+          !hasCategories;
+        const finalPData = isPlaceholderOnly ? defaultProjects : projectData;
+        setProjects(finalPData);
+        localStorage.setItem("projects", JSON.stringify(finalPData));
       }
       if (!certificatesResponse.error && certificatesResponse.data) {
         const cData = certificatesResponse.data.length > 0 ? certificatesResponse.data : defaultCertificates;

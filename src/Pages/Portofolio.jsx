@@ -146,7 +146,13 @@ export default function FullWidthTabs() {
 
       const projectData = projectsResponse.data || [];
       const certificateData = certificatesResponse.data || [];
-      const finalProjectData = projectData.length > 0 ? projectData : defaultProjects;
+      
+      const hasCategories = projectData.some(p => p.Category);
+      const isPlaceholderOnly = projectData.length === 0 || 
+        (projectData.length === 1 && projectData[0].Title === "Proyek Pertama Saya") ||
+        !hasCategories;
+
+      const finalProjectData = isPlaceholderOnly ? defaultProjects : projectData;
       const finalCertificateData = certificateData.length > 0 ? certificateData : defaultCertificates;
       
       setProjects(finalProjectData);
