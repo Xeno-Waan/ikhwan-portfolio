@@ -72,10 +72,10 @@ const defaultCertificates = [
 
 // Memoized Components
 const Header = memo(() => (
-  <div className="text-center lg:mb-8 mb-2 px-[5%]">
+  <div className="text-center mb-2 mt-4">
     <div className="inline-block relative group">
       <h2 
-        className="text-4xl md:text-5xl font-bold font-serif text-transparent bg-clip-text bg-gradient-to-r from-white via-gray-100 to-[#dfcfb9]" 
+        className="text-3xl md:text-4xl font-bold font-serif text-transparent bg-clip-text bg-gradient-to-r from-white via-gray-100 to-[#dfcfb9]" 
         data-aos="zoom-in-up"
         data-aos-duration="600"
       >
@@ -83,48 +83,40 @@ const Header = memo(() => (
       </h2>
     </div>
     <p 
-      className="mt-2 text-gray-400 max-w-2xl mx-auto text-base sm:text-lg flex items-center justify-center gap-2"
+      className="mt-1 text-gray-400 max-w-2xl mx-auto text-sm flex items-center justify-center gap-2"
       data-aos="zoom-in-up"
       data-aos-duration="800"
     >
-      <Sparkles className="w-5 h-5 text-amber-400" />
+      <Sparkles className="w-4 h-4 text-amber-400" />
       Transforming ideas into digital solutions
-      <Sparkles className="w-5 h-5 text-amber-400" />
+      <Sparkles className="w-4 h-4 text-amber-400" />
     </p>
   </div>
 ));
 
 const ProfileImage = memo(() => (
-  <div className="flex justify-end items-center sm:p-12 sm:py-0 sm:pb-0 p-0 py-2 pb-2">
+  <div className="flex justify-center lg:justify-end items-center py-2">
     <div 
       className="relative group" 
       data-aos="fade-up"
       data-aos-duration="1000"
     >
-      {/* Optimized gradient backgrounds with reduced complexity for mobile */}
-      <div className="absolute -inset-6 opacity-[25%] z-0 hidden sm:block">
+      <div className="absolute -inset-4 opacity-[20%] z-0 hidden sm:block">
         <div className="absolute inset-0 bg-gradient-to-r from-[#bfa37a]/15 to-[#dfcfb9]/15 rounded-full blur-2xl animate-spin-slower" />
-        <div className="absolute inset-0 bg-gradient-to-l from-amber-600/5 to-yellow-800/5 rounded-full blur-2xl animate-pulse-slow opacity-50" />
       </div>
 
       <div className="relative">
-        <div className="w-72 h-72 sm:w-80 sm:h-80 rounded-full overflow-hidden shadow-[0_0_40px_rgba(191,163,122,0.15)] transform transition-all duration-700 group-hover:scale-105">
+        <div className="w-48 h-48 sm:w-56 sm:h-56 lg:w-64 lg:h-64 rounded-full overflow-hidden shadow-[0_0_40px_rgba(191,163,122,0.15)] transform transition-all duration-700 group-hover:scale-105">
           <div className="absolute inset-0 border-4 border-white/20 rounded-full z-20 transition-all duration-700 group-hover:border-[#bfa37a]/50 group-hover:scale-105" />
-          
-          {/* Optimized overlay effects - disabled on mobile */}
           <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/40 z-10 transition-opacity duration-700 group-hover:opacity-0 hidden sm:block" />
-          
           <img
             src="/Photo.jpg"
             alt="Profile"
             className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700 group-hover:scale-110 group-hover:rotate-2"
             loading="lazy"
           />
-
-          {/* Advanced hover effects - desktop only */}
           <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-all duration-700 z-20 hidden sm:block">
             <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/10 to-transparent transform -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
-            <div className="absolute inset-0 rounded-full border-8 border-[#bfa37a]/10 scale-0 group-hover:scale-100 transition-transform duration-700 animate-pulse-slow" />
           </div>
         </div>
       </div>
@@ -132,49 +124,19 @@ const ProfileImage = memo(() => (
   </div>
 ));
 
-const StatCard = memo(({ icon: Icon, color, value, label, description, animation }) => (
+const StatCard = memo(({ icon: Icon, color, value, label, animation }) => (
   <div data-aos={animation} data-aos-duration={1300} className="relative group h-full">
-    <div className="relative z-10 bg-[#0f0e12]/60 backdrop-blur-lg rounded-2xl p-4 sm:p-6 border border-white/5 overflow-hidden transition-all duration-300 hover:scale-105 hover:border-[#bfa37a]/30 hover:shadow-2xl h-full flex flex-col justify-between">
+    <div className="relative z-10 bg-[#0f0e12]/60 backdrop-blur-lg rounded-xl p-3 border border-white/5 overflow-hidden transition-all duration-300 hover:scale-105 hover:border-[#bfa37a]/30 hover:shadow-xl h-full flex flex-col items-center justify-center text-center">
       <div className={`absolute -z-10 inset-0 bg-gradient-to-br ${color} opacity-5 group-hover:opacity-15 transition-opacity duration-300`}></div>
-      
-      <div className="flex items-center justify-between mb-4 gap-2">
-        <div className="w-10 h-10 sm:w-14 sm:h-14 rounded-full flex items-center justify-center bg-white/5 transition-transform group-hover:rotate-6 flex-shrink-0">
-          <Icon className="w-5 h-5 sm:w-6 sm:h-6 text-[#dfcfb9]" />
-        </div>
-        <span 
-          className="text-2xl sm:text-4xl font-bold font-serif text-white block truncate"
-          data-aos="fade-up-left"
-          data-aos-duration="1500"
-          data-aos-anchor-placement="top-bottom"
-        >
-          {value}
-        </span>
+      <div className="w-8 h-8 rounded-full flex items-center justify-center bg-white/5 mb-1.5 group-hover:scale-110 transition-transform">
+        <Icon className="w-4 h-4 text-[#dfcfb9]" />
       </div>
-
-      <div>
-        <p 
-          className="text-[10px] sm:text-xs uppercase tracking-wider text-gray-400 mb-1 sm:mb-2 font-medium"
-          data-aos="fade-up"
-          data-aos-duration="800"
-          data-aos-anchor-placement="top-bottom"
-        >
-          {label}
-        </p>
-        <div className="flex items-center justify-between gap-1">
-          <p 
-            className="text-[10px] sm:text-xs text-gray-500 font-light line-clamp-1"
-            data-aos="fade-up"
-            data-aos-duration="1000"
-            data-aos-anchor-placement="top-bottom"
-          >
-            {description}
-          </p>
-          <ArrowUpRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#dfcfb9]/50 group-hover:text-[#dfcfb9] transition-colors flex-shrink-0" />
-        </div>
-      </div>
+      <span className="text-xl font-bold font-serif text-white block">{value}</span>
+      <p className="text-[9px] uppercase tracking-wider text-gray-400 mt-0.5 font-medium leading-tight">{label}</p>
     </div>
   </div>
 ));
+
 
 const AboutPage = () => {
   const [projects, setProjects] = useState(() => {
@@ -317,16 +279,16 @@ const AboutPage = () => {
 
   return (
     <div
-      className="h-auto pb-[10%] text-white overflow-hidden px-[5%] sm:px-[5%] lg:px-[10%] mt-10 sm-mt-0" 
+      className="h-full overflow-y-auto pb-4 text-white px-[5%] sm:px-[5%] lg:px-[7%]" 
       id="About"
     >
       <Header />
 
-      <div className="w-full mx-auto pt-8 sm:pt-12 relative">
-        <div className="flex flex-col-reverse lg:grid lg:grid-cols-2 gap-10 lg:gap-16 items-center">
-          <div className="space-y-6 text-center lg:text-left">
+      <div className="w-full mx-auto pt-4 sm:pt-6 relative">
+        <div className="flex flex-col-reverse lg:grid lg:grid-cols-2 gap-6 lg:gap-10 items-center">
+          <div className="space-y-3 text-center lg:text-left">
             <h2 
-              className="text-3xl sm:text-4xl lg:text-5xl font-bold font-serif"
+              className="text-2xl sm:text-3xl lg:text-4xl font-bold font-serif"
               data-aos="fade-right"
               data-aos-duration="1000"
             >
@@ -343,51 +305,42 @@ const AboutPage = () => {
             </h2>
             
             <p 
-              className="text-base sm:text-lg text-gray-400 leading-relaxed text-justify pb-4 sm:pb-0 font-light"
+              className="text-sm text-gray-400 leading-relaxed text-justify font-light"
               data-aos="fade-right"
               data-aos-duration="1500"
             >
-              Saya adalah mahasiswa Teknik Informatika di STIKOM El Rahma yang berfokus pada pengembangan perangkat lunak dan teknologi web. Dengan dedikasi tinggi pada penulisan kode yang bersih (clean code) dan arsitektur yang efisien, saya mengkhususkan diri dalam membangun aplikasi web modern, responsif, dan berorientasi pada kenyamanan pengguna.
+              Mahasiswa Teknik Informatika di STIKOM El Rahma, fokus pada pengembangan web modern dan clean code. Membangun aplikasi responsif yang berorientasi pada kenyamanan pengguna.
             </p>
 
             {/* Quote Section */}
             <div 
-              className="relative bg-white/[0.02] border border-white/5 rounded-2xl p-6 my-6 backdrop-blur-md shadow-2xl overflow-hidden pl-8"
+              className="relative bg-white/[0.02] border border-white/5 rounded-xl py-3 px-4 pl-7 backdrop-blur-md overflow-hidden"
               data-aos="fade-up"
               data-aos-duration="1700"
             >
-              {/* Left border gold marker */}
-              <div className="absolute top-0 left-0 w-[4px] h-full bg-gradient-to-b from-[#bfa37a] to-[#dfcfb9]"></div>
-              
-              {/* Quote icon */}
-              <div className="absolute top-4 left-4 text-[#bfa37a] opacity-20">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h4v10h-10z"/>
-                </svg>
-              </div>
-              
-              <blockquote className="text-gray-300 text-center lg:text-left italic font-serif text-sm relative z-10 pl-2">
+              <div className="absolute top-0 left-0 w-[3px] h-full bg-gradient-to-b from-[#bfa37a] to-[#dfcfb9]"></div>
+              <blockquote className="text-gray-300 italic font-serif text-xs relative z-10">
                "Technology is best when it brings people together and solves real-world problems."
               </blockquote>
             </div>
 
-            <div className="flex flex-col sm:flex-row items-center lg:items-start gap-4 w-full">
-              <a href="https://drive.google.com/drive/folders/1BOm51Grsabb3zj6Xk27K-iRwI1zITcpo" className="w-full sm:w-auto" target="_blank" rel="noopener noreferrer">
+            <div className="flex flex-row items-center lg:items-start gap-3 w-full">
+              <a href="https://drive.google.com/drive/folders/1BOm51Grsabb3zj6Xk27K-iRwI1zITcpo" target="_blank" rel="noopener noreferrer">
                 <button 
                   data-aos="fade-up"
                   data-aos-duration="800"
-                  className="w-full sm:w-auto px-6 py-3 rounded-lg bg-gradient-to-r from-[#bfa37a] to-[#dfcfb9] text-[#050507] font-semibold transition-all duration-300 hover:scale-105 flex items-center justify-center gap-2 shadow-lg hover:shadow-[0_0_20px_rgba(191,163,122,0.3)]"
+                  className="px-5 py-2.5 rounded-lg bg-gradient-to-r from-[#bfa37a] to-[#dfcfb9] text-[#050507] font-semibold text-sm transition-all duration-300 hover:scale-105 flex items-center justify-center gap-2 shadow-lg hover:shadow-[0_0_20px_rgba(191,163,122,0.3)]"
                 >
-                  <FileText className="w-5 h-5" /> Download CV
+                  <FileText className="w-4 h-4" /> Download CV
                 </button>
               </a>
-              <Link to="/projects" className="w-full sm:w-auto">
+              <Link to="/projects">
                 <button 
                   data-aos="fade-up"
                   data-aos-duration="1000"
-                  className="w-full sm:w-auto px-6 py-3 rounded-lg border border-[#bfa37a]/30 text-[#dfcfb9] font-medium transition-all duration-300 hover:scale-105 hover:border-[#bfa37a]/60 flex items-center justify-center gap-2 hover:bg-[#bfa37a]/5"
+                  className="px-5 py-2.5 rounded-lg border border-[#bfa37a]/30 text-[#dfcfb9] font-medium text-sm transition-all duration-300 hover:scale-105 hover:border-[#bfa37a]/60 flex items-center justify-center gap-2 hover:bg-[#bfa37a]/5"
                 >
-                  <Code className="w-5 h-5" /> View Projects
+                  <Code className="w-4 h-4" /> View Projects
                 </button>
               </Link>
             </div>
@@ -397,7 +350,7 @@ const AboutPage = () => {
         </div>
 
         <Link to="/projects">
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-6 mt-16 cursor-pointer">
+          <div className="grid grid-cols-3 md:grid-cols-6 gap-3 mt-6 cursor-pointer">
             {statsData.map((stat) => (
               <StatCard key={stat.label} {...stat} />
             ))}

@@ -7,9 +7,9 @@ const StatusBadge = memo(() => (
   <div className="inline-block animate-float lg:mx-0">
     <div className="relative group">
       <div className="absolute -inset-0.5 bg-gradient-to-r from-[#bfa37a] to-[#dfcfb9] rounded-full blur opacity-30 group-hover:opacity-50 transition duration-1000"></div>
-      <div className="relative px-3 sm:px-4 py-2 rounded-full bg-black/40 backdrop-blur-xl border border-white/10">
+      <div className="relative px-3 sm:px-4 py-1.5 rounded-full bg-black/40 backdrop-blur-xl border border-white/10">
         <span className="bg-gradient-to-r from-[#bfa37a] to-[#dfcfb9] text-transparent bg-clip-text sm:text-sm text-[0.7rem] font-medium flex items-center font-sans">
-          <Sparkles className="sm:w-4 sm:h-4 w-3 h-3 mr-2 text-amber-400" />
+          <Sparkles className="sm:w-3.5 sm:h-3.5 w-3 h-3 mr-2 text-amber-400" />
           Ready to Collaborate
         </span>
       </div>
@@ -18,8 +18,8 @@ const StatusBadge = memo(() => (
 ));
 
 const MainTitle = memo(() => (
-  <div className="space-y-2">
-    <h1 className="text-5xl sm:text-6xl md:text-6xl lg:text-7xl font-bold tracking-tight font-serif leading-tight">
+  <div className="space-y-1">
+    <h1 className="text-4xl sm:text-5xl md:text-5xl lg:text-6xl font-bold tracking-tight font-serif leading-tight">
       <span className="relative inline-block">
         <span className="absolute -inset-2 bg-gradient-to-r from-[#bfa37a] to-[#dfcfb9] blur-2xl opacity-10"></span>
         <span className="relative bg-gradient-to-r from-white via-gray-100 to-gray-200 bg-clip-text text-transparent">
@@ -27,7 +27,7 @@ const MainTitle = memo(() => (
         </span>
       </span>
       <br />
-      <span className="relative inline-block mt-2">
+      <span className="relative inline-block mt-1">
         <span className="absolute -inset-2 bg-gradient-to-r from-[#bfa37a] to-[#dfcfb9] blur-2xl opacity-10"></span>
         <span className="relative bg-gradient-to-r from-[#bfa37a] to-[#dfcfb9] bg-clip-text text-transparent">
           Web Developer
@@ -38,16 +38,16 @@ const MainTitle = memo(() => (
 ));
 
 const TechStack = memo(({ tech }) => (
-  <div className="px-4 py-2 hidden sm:block rounded-full bg-white/5 backdrop-blur-sm border border-white/10 text-sm text-gray-300 hover:border-[#bfa37a]/30 transition-colors">
+  <div className="px-3 py-1.5 hidden sm:block rounded-full bg-white/5 backdrop-blur-sm border border-white/10 text-xs text-gray-300 hover:border-[#bfa37a]/30 transition-colors">
     {tech}
   </div>
 ));
 
 const CTAButton = memo(({ href, text, icon: Icon }) => (
   <Link to={href}>
-    <button className="group relative w-[160px]">
+    <button className="group relative w-[140px]">
       <div className="absolute -inset-0.5 bg-gradient-to-r from-[#bfa37a] to-[#dfcfb9] rounded-xl opacity-40 blur-md group-hover:opacity-75 transition-all duration-700"></div>
-      <div className="relative h-11 bg-[#050507] backdrop-blur-xl rounded-lg border border-white/10 leading-none overflow-hidden">
+      <div className="relative h-10 bg-[#050507] backdrop-blur-xl rounded-lg border border-white/10 leading-none overflow-hidden">
         <div className="absolute inset-0 scale-x-0 group-hover:scale-x-100 origin-left transition-transform duration-500 bg-gradient-to-r from-[#bfa37a]/10 to-[#dfcfb9]/10"></div>
         <span className="absolute inset-0 flex items-center justify-center gap-2 text-sm group-hover:gap-3 transition-all duration-300">
           <span className="bg-gradient-to-r from-gray-200 to-white bg-clip-text text-transparent font-medium z-10">
@@ -62,10 +62,10 @@ const CTAButton = memo(({ href, text, icon: Icon }) => (
 
 const SocialLink = memo(({ icon: Icon, link }) => (
   <a href={link} target="_blank" rel="noopener noreferrer">
-    <button className="group relative p-3">
+    <button className="group relative p-2">
       <div className="absolute inset-0 bg-gradient-to-r from-[#bfa37a] to-[#dfcfb9] rounded-xl blur opacity-10 group-hover:opacity-30 transition duration-300"></div>
       <div className="relative rounded-xl bg-black/50 backdrop-blur-xl p-2 flex items-center justify-center border border-white/10 group-hover:border-white/20 transition-all duration-300">
-        <Icon className="w-5 h-5 text-gray-400 group-hover:text-white transition-colors" />
+        <Icon className="w-4 h-4 text-gray-400 group-hover:text-white transition-colors" />
       </div>
     </button>
   </a>
@@ -125,31 +125,31 @@ const Home = () => {
   }, [handleTyping]);
 
   return (
-    <div className="min-h-screen bg-[#050507] overflow-hidden px-[5%] sm:px-[5%] lg:px-[10%] " id="Home">
-      <div className={`relative z-10 transition-all duration-1000 ${isLoaded ? "opacity-100" : "opacity-0"}`}>
-        <div className="container mx-auto min-h-screen flex items-center">
-          <div className="flex flex-col lg:flex-row items-center justify-center min-h-screen md:justify-between gap-12 lg:gap-20 w-full py-20 lg:py-0">
+    <div className="h-full bg-transparent overflow-hidden px-[5%] sm:px-[6%] lg:px-[8%]" id="Home">
+      <div className={`relative z-10 h-full transition-all duration-1000 ${isLoaded ? "opacity-100" : "opacity-0"}`}>
+        <div className="h-full flex items-center">
+          <div className="flex flex-col lg:flex-row items-center justify-center lg:justify-between gap-6 lg:gap-12 w-full">
             {/* Left Column */}
-            <div className="w-full lg:w-1/2 space-y-6 sm:space-y-8 text-left lg:text-left order-1 lg:order-1">
-              <div className="space-y-4 sm:space-y-6">
+            <div className="w-full lg:w-1/2 space-y-4 sm:space-y-5 text-left lg:text-left order-1 lg:order-1">
+              <div className="space-y-3 sm:space-y-4">
                 <StatusBadge />
                 <MainTitle />
 
                 {/* Typing Effect */}
-                <div className="h-8 flex items-center">
-                  <span className="text-xl md:text-2xl bg-gradient-to-r from-gray-100 via-gray-200 to-gray-300 bg-clip-text text-transparent font-light">
+                <div className="h-7 flex items-center">
+                  <span className="text-lg md:text-xl bg-gradient-to-r from-gray-100 via-gray-200 to-gray-300 bg-clip-text text-transparent font-light">
                     {text}
                   </span>
-                  <span className="w-[3px] h-6 bg-gradient-to-t from-[#bfa37a] to-[#dfcfb9] ml-1 animate-blink"></span>
+                  <span className="w-[3px] h-5 bg-gradient-to-t from-[#bfa37a] to-[#dfcfb9] ml-1 animate-blink"></span>
                 </div>
 
                 {/* Description */}
-                <p className="text-base md:text-lg text-gray-400 max-w-xl leading-relaxed font-light">
+                <p className="text-sm md:text-base text-gray-400 max-w-xl leading-relaxed font-light">
                   Menciptakan aplikasi web yang inovatif, fungsional, dan bernilai tinggi dengan fokus pada performa serta kebersihan kode.
                 </p>
 
                 {/* Tech Stack */}
-                <div className="flex flex-wrap gap-3 justify-start">
+                <div className="flex flex-wrap gap-2 justify-start">
                   {TECH_STACK.map((tech, index) => (
                     <TechStack key={index} tech={tech} />
                   ))}
@@ -162,7 +162,7 @@ const Home = () => {
                 </div>
 
                 {/* Social Links */}
-                <div className="hidden sm:flex gap-4 justify-start">
+                <div className="hidden sm:flex gap-3 justify-start">
                   {SOCIAL_LINKS.map((social, index) => (
                     <SocialLink key={index} {...social} />
                   ))}
@@ -174,7 +174,7 @@ const Home = () => {
             <div className="w-full lg:w-1/2 h-auto relative flex items-center justify-center order-2 lg:order-2"
               onMouseEnter={() => setIsHovering(true)}
               onMouseLeave={() => setIsHovering(false)}>
-              <div className="relative w-72 h-72 sm:w-96 sm:h-96 opacity-95 group">
+              <div className="relative w-56 h-56 sm:w-72 sm:h-72 lg:w-80 lg:h-80 opacity-95 group">
                 {/* Glowing Aura */}
                 <div className={`absolute -inset-4 bg-gradient-to-r from-[#bfa37a]/15 to-[#dfcfb9]/15 rounded-full blur-3xl transition-all duration-1000 ease-in-out ${
                   isHovering ? "opacity-75 scale-110" : "opacity-40 scale-100"
@@ -197,8 +197,8 @@ const Home = () => {
                   </div>
                   
                   {/* Bottom overlay badge */}
-                  <div className="absolute bottom-6 left-6 right-6 p-4 rounded-xl bg-black/70 backdrop-blur-md border border-white/10 transition-all duration-500 transform translate-y-2 group-hover:translate-y-0 opacity-0 group-hover:opacity-100">
-                    <p className="text-white font-serif font-semibold text-base sm:text-lg">M. Ikhwan Manshur</p>
+                  <div className="absolute bottom-4 left-4 right-4 p-3 rounded-xl bg-black/70 backdrop-blur-md border border-white/10 transition-all duration-500 transform translate-y-2 group-hover:translate-y-0 opacity-0 group-hover:opacity-100">
+                    <p className="text-white font-serif font-semibold text-sm sm:text-base">M. Ikhwan Manshur</p>
                     <p className="text-xs text-gray-400 font-light">Informatics & Web Engineering</p>
                   </div>
                 </div>

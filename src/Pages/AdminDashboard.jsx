@@ -1,17 +1,17 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../supabase";
-import { 
-  FolderGit2, 
-  Award, 
-  MessageSquare, 
-  LogOut, 
-  Plus, 
-  Trash2, 
-  Edit, 
-  Upload, 
-  Pin, 
-  X, 
+import {
+  FolderGit2,
+  Award,
+  MessageSquare,
+  LogOut,
+  Plus,
+  Trash2,
+  Edit,
+  Upload,
+  Pin,
+  X,
   ExternalLink,
   ChevronLeft,
   Loader2,
@@ -19,12 +19,111 @@ import {
   Globe,
   Palette,
   Video,
-  Settings
+  Settings,
+  Image,
+  Link2,
+  CheckCircle2,
+  AlertCircle,
+  LayoutGrid,
+  Eye,
+  Github,
 } from "lucide-react";
 import Swal from "sweetalert2";
 
+// ─── Reusable upload zone ────────────────────────────────────────────────────
+const UploadZone = ({ uploadFile, setUploadFile, uploadingFile, accept = "image/*", label = "Gambar" }) => {
+  const inputRef = useRef(null);
+  const [dragOver, setDragOver] = useState(false);
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    setDragOver(false);
+    const file = e.dataTransfer.files[0];
+    if (file) setUploadFile(file);
+  };
+
+  const preview = uploadFile ? URL.createObjectURL(uploadFile) : null;
+
+  return (
+    <div
+      onClick={() => inputRef.current?.click()}
+      onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+      onDragLeave={() => setDragOver(false)}
+      onDrop={handleDrop}
+      className={`relative flex flex-col items-center justify-center w-full h-36 border-2 border-dashed rounded-2xl cursor-pointer transition-all duration-300 overflow-hidden ${
+        dragOver
+          ? "border-[#bfa37a] bg-[#bfa37a]/10 scale-[1.01]"
+          : uploadFile
+          ? "border-[#bfa37a]/50 bg-[#bfa37a]/5"
+          : "border-white/10 bg-black/20 hover:border-[#bfa37a]/40 hover:bg-black/30"
+      }`}
+    >
+      {preview && (
+        <img src={preview} alt="preview" className="absolute inset-0 w-full h-full object-cover opacity-30" />
+      )}
+      <div className="relative z-10 flex flex-col items-center gap-2 px-4 text-center">
+        {uploadingFile ? (
+          <Loader2 className="w-8 h-8 animate-spin text-[#bfa37a]" />
+        ) : uploadFile ? (
+          <>
+            <CheckCircle2 className="w-7 h-7 text-[#bfa37a]" />
+            <p className="text-xs text-[#dfcfb9] font-medium truncate max-w-[200px]">{uploadFile.name}</p>
+            <p className="text-[10px] text-gray-500">Klik untuk ganti file</p>
+          </>
+        ) : (
+          <>
+            <Upload className="w-7 h-7 text-gray-400" />
+            <p className="text-xs text-gray-300 font-medium">Upload {label} atau Drag & Drop</p>
+            <p className="text-[10px] text-gray-500">{accept === "image/*" ? "JPG, PNG, WEBP, SVG" : "Format file yang diterima"}</p>
+          </>
+        )}
+      </div>
+      <input
+        ref={inputRef}
+        type="file"
+        accept={accept}
+        onChange={(e) => setUploadFile(e.target.files[0])}
+        className="hidden"
+      />
+      {uploadFile && (
+        <button
+          type="button"
+          onClick={(e) => { e.stopPropagation(); setUploadFile(null); }}
+          className="absolute top-2 right-2 z-20 p-1 rounded-full bg-black/60 text-gray-300 hover:text-white hover:bg-black/80 transition"
+        >
+          <X className="w-3.5 h-3.5" />
+        </button>
+      )}
+    </div>
+  );
+};
+
+// ─── Field wrapper ────────────────────────────────────────────────────────────
+const Field = ({ label, icon: Icon, children, hint }) => (
+  <div className="space-y-1.5">
+    <label className="flex items-center gap-1.5 text-[11px] font-semibold text-gray-300 uppercase tracking-wider">
+      {Icon && <Icon className="w-3.5 h-3.5 text-[#bfa37a]" />}
+      {label}
+    </label>
+    {children}
+    {hint && <p className="text-[10px] text-gray-500">{hint}</p>}
+  </div>
+);
+
+// ─── Input/Textarea Styles ────────────────────────────────────────────────────
+const inputCls = "block w-full px-4 py-2.5 border border-white/10 rounded-xl bg-black/40 text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-[#bfa37a] focus:border-[#bfa37a] text-sm transition";
+const textareaCls = `${inputCls} resize-none`;
+
+// ─── Category config ──────────────────────────────────────────────────────────
+const CATEGORIES = [
+  { key: "website", label: "Website", icon: Globe, color: "from-blue-500/20 to-cyan-500/20", accent: "text-cyan-400" },
+  { key: "design", label: "Poster / Design", icon: Palette, color: "from-purple-500/20 to-pink-500/20", accent: "text-pink-400" },
+  { key: "video", label: "Video", icon: Video, color: "from-red-500/20 to-orange-500/20", accent: "text-red-400" },
+];
+
+// ─── Main Admin Dashboard ─────────────────────────────────────────────────────
 const AdminDashboard = () => {
-  const [activeTab, setActiveTab] = useState("website");
+  const [activeTab, setActiveTab] = useState("projects");
   const [projects, setProjects] = useState([]);
   const [certificates, setCertificates] = useState([]);
   const [comments, setComments] = useState([]);
@@ -36,22 +135,27 @@ const AdminDashboard = () => {
   const [experienceSetting, setExperienceSetting] = useState(null);
   const [experienceValue, setExperienceValue] = useState("2021-11-06");
 
-  // Modal State
-  const [activeModal, setActiveModal] = useState(null); // null, "website", "design", "video"
-  const [isCertModalOpen, setIsCertModalOpen] = useState(false);
-  const [currentProject, setCurrentProject] = useState({ id: null, Title: "", Description: "", Link: "", Img: "", Category: "website", Github: "", Features: "", TechStack: "" });
-  const [currentCert, setCurrentCert] = useState({ id: null, Img: "" });
+  // Modal state
+  const [showProjectModal, setShowProjectModal] = useState(false);
+  const [showCertModal, setShowCertModal] = useState(false);
+  const [currentProject, setCurrentProject] = useState({
+    id: null, Title: "", Description: "", Link: "", Img: "",
+    Category: "website", Github: "", Features: "", TechStack: ""
+  });
+  const [currentCert, setCurrentCert] = useState({ id: null, Img: "", Title: "" });
+
+  // Upload state (shared but reset per modal open)
   const [uploadFile, setUploadFile] = useState(null);
+  const [certUploadFile, setCertUploadFile] = useState(null);
   const [uploadingFile, setUploadingFile] = useState(false);
 
-  // Check auth and load data
+  // Filter state for projects tab
+  const [filterCat, setFilterCat] = useState("all");
+
   useEffect(() => {
     const checkUser = async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        navigate("/login");
-        return;
-      }
+      if (!session) { navigate("/login"); return; }
       setUserEmail(session.user.email);
       loadAllData();
     };
@@ -66,7 +170,6 @@ const AdminDashboard = () => {
         supabase.from("certificates").select("*").order("id", { ascending: true }),
         supabase.from("portfolio_comments").select("*").order("created_at", { ascending: false })
       ]);
-
       if (projRes.error) throw projRes.error;
       if (certRes.error) throw certRes.error;
       if (commRes.error) throw commRes.error;
@@ -78,21 +181,9 @@ const AdminDashboard = () => {
       setProjects(filteredProjects);
       setCertificates(certRes.data || []);
       setComments(commRes.data || []);
-
-      if (settingProj) {
-        setExperienceSetting(settingProj);
-        setExperienceValue(settingProj.Description);
-      }
+      if (settingProj) { setExperienceSetting(settingProj); setExperienceValue(settingProj.Description); }
     } catch (error) {
-      console.error("Error loading admin data:", error);
-      Swal.fire({
-        icon: "error",
-        title: "Load Failed",
-        text: "Could not load dashboard data: " + error.message,
-        background: "#0a0a0c",
-        color: "#fff",
-        confirmButtonColor: "#bfa37a"
-      });
+      Swal.fire({ icon: "error", title: "Load Failed", text: error.message, background: "#0a0a0c", color: "#fff", confirmButtonColor: "#bfa37a" });
     } finally {
       setLoading(false);
     }
@@ -100,95 +191,60 @@ const AdminDashboard = () => {
 
   const handleLogout = async () => {
     const result = await Swal.fire({
-      title: "Logout?",
-      text: "Are you sure you want to end your session?",
-      icon: "question",
-      showCancelButton: true,
-      confirmButtonText: "Logout",
-      cancelButtonText: "Cancel",
-      background: "#0a0a0c",
-      color: "#fff",
-      confirmButtonColor: "#dc2626",
-      cancelButtonColor: "#3f3f46"
+      title: "Logout?", icon: "question", showCancelButton: true,
+      confirmButtonText: "Logout", cancelButtonText: "Batal",
+      background: "#0a0a0c", color: "#fff", confirmButtonColor: "#dc2626", cancelButtonColor: "#3f3f46"
     });
-
-    if (result.isConfirmed) {
-      await supabase.auth.signOut();
-      navigate("/");
-    }
+    if (result.isConfirmed) { await supabase.auth.signOut(); navigate("/"); }
   };
 
-  // Upload to Supabase Storage
-  const uploadImage = async (file) => {
+  // ─── Upload to storage ──────────────────────────────────────────────────────
+  const uploadToStorage = async (file) => {
     if (!file) return null;
     setUploadingFile(true);
     try {
       const fileExt = file.name.split('.').pop();
       const fileName = `${Date.now()}_${Math.random().toString(36).substring(2)}.${fileExt}`;
       const filePath = `admin-uploads/${fileName}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from('profile-images')
-        .upload(filePath, file);
-
-      if (uploadError) throw uploadError;
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('profile-images')
-        .getPublicUrl(filePath);
-
+      const { error: upErr } = await supabase.storage.from('profile-images').upload(filePath, file);
+      if (upErr) throw upErr;
+      const { data: { publicUrl } } = supabase.storage.from('profile-images').getPublicUrl(filePath);
       return publicUrl;
-    } catch (error) {
-      console.error("Upload error:", error);
-      Swal.fire({
-        icon: "error",
-        title: "Upload Failed",
-        text: "Could not upload image: " + error.message + ". Fallback to URL mode.",
-        background: "#0a0a0c",
-        color: "#fff",
-        confirmButtonColor: "#bfa37a"
-      });
+    } catch (err) {
+      Swal.fire({ icon: "error", title: "Upload Gagal", text: err.message, background: "#0a0a0c", color: "#fff", confirmButtonColor: "#bfa37a" });
       return null;
     } finally {
       setUploadingFile(false);
     }
   };
 
-  // ==================== PROJECTS CRUD ====================
-  const openProjectModal = (proj = {}) => {
-    const defaultCategory = ["website", "design", "video"].includes(activeTab) ? activeTab : "website";
-    const category = proj.Category || defaultCategory;
-    setCurrentProject({
-      id: proj.id || null,
-      Title: proj.Title || "",
-      Description: proj.Description || "",
-      Link: proj.Link || "",
-      Img: proj.Img || "",
-      Category: category,
-      Github: proj.Github || "",
-      Features: Array.isArray(proj.Features) ? proj.Features.join("\n") : (proj.Features || ""),
-      TechStack: Array.isArray(proj.TechStack) ? proj.TechStack.join(", ") : (proj.TechStack || "")
-    });
+  // ─── PROJECTS CRUD ──────────────────────────────────────────────────────────
+  const openProjectModal = (proj = null, defaultCat = "website") => {
+    if (proj) {
+      setCurrentProject({
+        id: proj.id, Title: proj.Title || "", Description: proj.Description || "",
+        Link: proj.Link || "", Img: proj.Img || "", Category: proj.Category || "website",
+        Github: proj.Github || "",
+        Features: Array.isArray(proj.Features) ? proj.Features.join("\n") : (proj.Features || ""),
+        TechStack: Array.isArray(proj.TechStack) ? proj.TechStack.join(", ") : (proj.TechStack || "")
+      });
+    } else {
+      setCurrentProject({ id: null, Title: "", Description: "", Link: "", Img: "", Category: defaultCat, Github: "", Features: "", TechStack: "" });
+    }
     setUploadFile(null);
-    setActiveModal(category);
+    setShowProjectModal(true);
   };
 
   const saveProject = async (e) => {
     e.preventDefault();
     setLoading(true);
-
     try {
       let imageUrl = currentProject.Img;
-      
-      // If file chosen, upload first
       if (uploadFile) {
-        const uploadedUrl = await uploadImage(uploadFile);
-        if (uploadedUrl) imageUrl = uploadedUrl;
+        const url = await uploadToStorage(uploadFile);
+        if (url) imageUrl = url;
       }
-
-      if (!imageUrl) {
-        throw new Error("An image URL or image file upload is required.");
-      }
+      if (!imageUrl) throw new Error("Thumbnail/gambar wajib diisi.");
 
       const payload = {
         Title: currentProject.Title,
@@ -197,44 +253,25 @@ const AdminDashboard = () => {
         Img: imageUrl,
         Category: currentProject.Category || "website",
         Github: currentProject.Github || "Private",
-        Features: typeof currentProject.Features === "string" 
-          ? currentProject.Features.split("\n").map(f => f.trim()).filter(Boolean) 
-          : [],
+        Features: typeof currentProject.Features === "string"
+          ? currentProject.Features.split("\n").map(f => f.trim()).filter(Boolean) : [],
         TechStack: typeof currentProject.TechStack === "string"
-          ? currentProject.TechStack.split(",").map(t => t.trim()).filter(Boolean)
-          : []
+          ? currentProject.TechStack.split(",").map(t => t.trim()).filter(Boolean) : []
       };
 
       if (currentProject.id) {
-        // Update
-        const { error } = await supabase
-          .from("projects")
-          .update(payload)
-          .eq("id", currentProject.id);
-
+        const { error } = await supabase.from("projects").update(payload).eq("id", currentProject.id);
         if (error) throw error;
-        Swal.fire({ icon: "success", title: "Project Updated", timer: 1500, showConfirmButton: false, background: "#0a0a0c", color: "#fff" });
+        Swal.fire({ icon: "success", title: "Project Diperbarui", timer: 1500, showConfirmButton: false, background: "#0a0a0c", color: "#fff" });
       } else {
-        // Insert
-        const { error } = await supabase
-          .from("projects")
-          .insert([payload]);
-
+        const { error } = await supabase.from("projects").insert([payload]);
         if (error) throw error;
-        Swal.fire({ icon: "success", title: "Project Created", timer: 1500, showConfirmButton: false, background: "#0a0a0c", color: "#fff" });
+        Swal.fire({ icon: "success", title: "Project Ditambahkan", timer: 1500, showConfirmButton: false, background: "#0a0a0c", color: "#fff" });
       }
-
-      setActiveModal(null);
+      setShowProjectModal(false);
       loadAllData();
     } catch (error) {
-      Swal.fire({
-        icon: "error",
-        title: "Save Failed",
-        text: error.message,
-        background: "#0a0a0c",
-        color: "#fff",
-        confirmButtonColor: "#bfa37a"
-      });
+      Swal.fire({ icon: "error", title: "Gagal Menyimpan", text: error.message, background: "#0a0a0c", color: "#fff", confirmButtonColor: "#bfa37a" });
     } finally {
       setLoading(false);
     }
@@ -242,67 +279,58 @@ const AdminDashboard = () => {
 
   const deleteProject = async (id) => {
     const result = await Swal.fire({
-      title: "Delete Project?",
-      text: "This action cannot be undone.",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonText: "Delete",
-      cancelButtonText: "Cancel",
-      background: "#0a0a0c",
-      color: "#fff",
-      confirmButtonColor: "#dc2626",
-      cancelButtonColor: "#3f3f46"
+      title: "Hapus Project?", text: "Aksi ini tidak bisa dibatalkan.", icon: "warning",
+      showCancelButton: true, confirmButtonText: "Hapus", cancelButtonText: "Batal",
+      background: "#0a0a0c", color: "#fff", confirmButtonColor: "#dc2626", cancelButtonColor: "#3f3f46"
     });
-
     if (result.isConfirmed) {
       setLoading(true);
       try {
         const { error } = await supabase.from("projects").delete().eq("id", id);
         if (error) throw error;
-        Swal.fire({ icon: "success", title: "Deleted", timer: 1200, showConfirmButton: false, background: "#0a0a0c", color: "#fff" });
+        Swal.fire({ icon: "success", title: "Dihapus", timer: 1200, showConfirmButton: false, background: "#0a0a0c", color: "#fff" });
         loadAllData();
       } catch (error) {
-        Swal.fire({ icon: "error", title: "Delete Failed", text: error.message, background: "#0a0a0c", color: "#fff" });
+        Swal.fire({ icon: "error", title: "Gagal Menghapus", text: error.message, background: "#0a0a0c", color: "#fff" });
       } finally {
         setLoading(false);
       }
     }
   };
 
-  // ==================== CERTIFICATES CRUD ====================
-  const openCertModal = () => {
-    setCurrentCert({ id: null, Img: "" });
-    setUploadFile(null);
-    setIsCertModalOpen(true);
+  // ─── CERTIFICATES CRUD ──────────────────────────────────────────────────────
+  const openCertModal = (cert = null) => {
+    setCurrentCert(cert ? { id: cert.id, Img: cert.Img || "", Title: cert.Title || "" } : { id: null, Img: "", Title: "" });
+    setCertUploadFile(null);
+    setShowCertModal(true);
   };
 
   const saveCert = async (e) => {
     e.preventDefault();
     setLoading(true);
-
     try {
       let imageUrl = currentCert.Img;
-
-      if (uploadFile) {
-        const uploadedUrl = await uploadImage(uploadFile);
-        if (uploadedUrl) imageUrl = uploadedUrl;
+      if (certUploadFile) {
+        const url = await uploadToStorage(certUploadFile);
+        if (url) imageUrl = url;
       }
+      if (!imageUrl) throw new Error("Gambar sertifikat wajib diisi.");
 
-      if (!imageUrl) {
-        throw new Error("An image URL or image file upload is required.");
+      const payload = { Img: imageUrl, ...(currentCert.Title ? { Title: currentCert.Title } : {}) };
+
+      if (currentCert.id) {
+        const { error } = await supabase.from("certificates").update(payload).eq("id", currentCert.id);
+        if (error) throw error;
+        Swal.fire({ icon: "success", title: "Sertifikat Diperbarui", timer: 1500, showConfirmButton: false, background: "#0a0a0c", color: "#fff" });
+      } else {
+        const { error } = await supabase.from("certificates").insert([payload]);
+        if (error) throw error;
+        Swal.fire({ icon: "success", title: "Sertifikat Ditambahkan", timer: 1500, showConfirmButton: false, background: "#0a0a0c", color: "#fff" });
       }
-
-      const { error } = await supabase
-        .from("certificates")
-        .insert([{ Img: imageUrl }]);
-
-      if (error) throw error;
-
-      Swal.fire({ icon: "success", title: "Certificate Added", timer: 1500, showConfirmButton: false, background: "#0a0a0c", color: "#fff" });
-      setIsCertModalOpen(false);
+      setShowCertModal(false);
       loadAllData();
     } catch (error) {
-      Swal.fire({ icon: "error", title: "Save Failed", text: error.message, background: "#0a0a0c", color: "#fff" });
+      Swal.fire({ icon: "error", title: "Gagal Menyimpan", text: error.message, background: "#0a0a0c", color: "#fff" });
     } finally {
       setLoading(false);
     }
@@ -310,898 +338,671 @@ const AdminDashboard = () => {
 
   const deleteCert = async (id) => {
     const result = await Swal.fire({
-      title: "Delete Certificate?",
-      text: "This action cannot be undone.",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonText: "Delete",
-      cancelButtonText: "Cancel",
-      background: "#0a0a0c",
-      color: "#fff",
-      confirmButtonColor: "#dc2626",
-      cancelButtonColor: "#3f3f46"
+      title: "Hapus Sertifikat?", icon: "warning", showCancelButton: true,
+      confirmButtonText: "Hapus", cancelButtonText: "Batal",
+      background: "#0a0a0c", color: "#fff", confirmButtonColor: "#dc2626", cancelButtonColor: "#3f3f46"
     });
-
     if (result.isConfirmed) {
       setLoading(true);
       try {
         const { error } = await supabase.from("certificates").delete().eq("id", id);
         if (error) throw error;
-        Swal.fire({ icon: "success", title: "Deleted", timer: 1200, showConfirmButton: false, background: "#0a0a0c", color: "#fff" });
+        Swal.fire({ icon: "success", title: "Dihapus", timer: 1200, showConfirmButton: false, background: "#0a0a0c", color: "#fff" });
         loadAllData();
       } catch (error) {
-        Swal.fire({ icon: "error", title: "Delete Failed", text: error.message, background: "#0a0a0c", color: "#fff" });
+        Swal.fire({ icon: "error", title: "Gagal Menghapus", text: error.message, background: "#0a0a0c", color: "#fff" });
       } finally {
         setLoading(false);
       }
     }
   };
 
-  // ==================== COMMENTS MANAGEMENT ====================
+  // ─── COMMENTS ───────────────────────────────────────────────────────────────
   const togglePinComment = async (comment) => {
     try {
-      const { error } = await supabase
-        .from("portfolio_comments")
-        .update({ is_pinned: !comment.is_pinned })
-        .eq("id", comment.id);
-
+      const { error } = await supabase.from("portfolio_comments").update({ is_pinned: !comment.is_pinned }).eq("id", comment.id);
       if (error) throw error;
-
-      // Logika frontend update local state agar cepat
-      setComments(prev => 
-        prev.map(c => c.id === comment.id ? { ...c, is_pinned: !c.is_pinned } : c)
-      );
-
-      Swal.fire({ 
-        icon: "success", 
-        title: comment.is_pinned ? "Comment Unpinned" : "Comment Pinned", 
-        timer: 1000, 
-        showConfirmButton: false, 
-        background: "#0a0a0c", 
-        color: "#fff" 
-      });
+      setComments(prev => prev.map(c => c.id === comment.id ? { ...c, is_pinned: !c.is_pinned } : c));
+      Swal.fire({ icon: "success", title: comment.is_pinned ? "Unpinned" : "Pinned", timer: 900, showConfirmButton: false, background: "#0a0a0c", color: "#fff" });
     } catch (error) {
-      Swal.fire({ icon: "error", title: "Failed", text: error.message, background: "#0a0a0c", color: "#fff" });
+      Swal.fire({ icon: "error", title: "Gagal", text: error.message, background: "#0a0a0c", color: "#fff" });
     }
   };
 
   const deleteComment = async (id) => {
     const result = await Swal.fire({
-      title: "Delete Comment?",
-      text: "This will remove the comment permanently.",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonText: "Delete",
-      cancelButtonText: "Cancel",
-      background: "#0a0a0c",
-      color: "#fff",
-      confirmButtonColor: "#dc2626",
-      cancelButtonColor: "#3f3f46"
+      title: "Hapus Komentar?", icon: "warning", showCancelButton: true,
+      confirmButtonText: "Hapus", cancelButtonText: "Batal",
+      background: "#0a0a0c", color: "#fff", confirmButtonColor: "#dc2626", cancelButtonColor: "#3f3f46"
     });
-
     if (result.isConfirmed) {
       setLoading(true);
       try {
         const { error } = await supabase.from("portfolio_comments").delete().eq("id", id);
         if (error) throw error;
-        Swal.fire({ icon: "success", title: "Deleted", timer: 1200, showConfirmButton: false, background: "#0a0a0c", color: "#fff" });
+        Swal.fire({ icon: "success", title: "Dihapus", timer: 1200, showConfirmButton: false, background: "#0a0a0c", color: "#fff" });
         loadAllData();
       } catch (error) {
-        Swal.fire({ icon: "error", title: "Delete Failed", text: error.message, background: "#0a0a0c", color: "#fff" });
+        Swal.fire({ icon: "error", title: "Gagal", text: error.message, background: "#0a0a0c", color: "#fff" });
       } finally {
         setLoading(false);
       }
     }
   };
 
+  // ─── SETTINGS ────────────────────────────────────────────────────────────────
   const saveExperienceSetting = async (val) => {
     setLoading(true);
     try {
-      const payload = {
-        Title: "experience_start_date",
-        Description: val,
-        Category: "setting",
-        Img: "https://placehold.co/600x400", // dummy value
-        Link: "",
-        Github: "Private",
-        Features: [],
-        TechStack: []
-      };
-
-      if (experienceSetting && experienceSetting.id) {
-        const { error } = await supabase
-          .from("projects")
-          .update(payload)
-          .eq("id", experienceSetting.id);
+      const payload = { Title: "experience_start_date", Description: val, Category: "setting", Img: "https://placehold.co/600x400", Link: "", Github: "Private", Features: [], TechStack: [] };
+      if (experienceSetting?.id) {
+        const { error } = await supabase.from("projects").update(payload).eq("id", experienceSetting.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase
-          .from("projects")
-          .insert([payload]);
+        const { error } = await supabase.from("projects").insert([payload]);
         if (error) throw error;
       }
-
-      Swal.fire({
-        icon: "success",
-        title: "Settings Saved",
-        timer: 1500,
-        showConfirmButton: false,
-        background: "#0a0a0c",
-        color: "#fff"
-      });
+      Swal.fire({ icon: "success", title: "Pengaturan Disimpan", timer: 1500, showConfirmButton: false, background: "#0a0a0c", color: "#fff" });
       loadAllData();
     } catch (error) {
-      Swal.fire({
-        icon: "error",
-        title: "Save Failed",
-        text: error.message,
-        background: "#0a0a0c",
-        color: "#fff"
-      });
+      Swal.fire({ icon: "error", title: "Gagal", text: error.message, background: "#0a0a0c", color: "#fff" });
     } finally {
       setLoading(false);
     }
   };
 
+  // ─── Computed filtered projects ──────────────────────────────────────────────
+  const filteredProjects = filterCat === "all" ? projects : projects.filter(p => p.Category?.toLowerCase() === filterCat);
+
+  // ─── Sidebar items ────────────────────────────────────────────────────────────
+  const sidebarItems = [
+    { key: "projects", label: "Semua Project", icon: LayoutGrid, count: projects.length },
+    { key: "certificates", label: "Sertifikat", icon: Award, count: certificates.length },
+    { key: "comments", label: "Komentar", icon: MessageSquare, count: comments.length },
+    { key: "settings", label: "Pengaturan", icon: Settings },
+  ];
+
   return (
     <div className="min-h-screen bg-[#050507] text-white flex flex-col md:flex-row relative">
-      {/* Background grids & blur */}
+      {/* Background */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 right-1/4 w-[500px] h-[500px] bg-[#bfa37a]/5 rounded-full blur-[160px]"></div>
-        <div className="absolute bottom-0 left-1/4 w-[600px] h-[600px] bg-[#dfcfb9]/3 rounded-full blur-[180px]"></div>
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(197,168,128,0.015)_1px,transparent_1px),linear-gradient(to_bottom,rgba(197,168,128,0.015)_1px,transparent_1px)] bg-[size:40px_40px]"></div>
+        <div className="absolute top-0 right-1/4 w-[500px] h-[500px] bg-[#bfa37a]/5 rounded-full blur-[160px]" />
+        <div className="absolute bottom-0 left-1/4 w-[600px] h-[600px] bg-[#dfcfb9]/3 rounded-full blur-[180px]" />
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(197,168,128,0.015)_1px,transparent_1px),linear-gradient(to_bottom,rgba(197,168,128,0.015)_1px,transparent_1px)] bg-[size:40px_40px]" />
       </div>
 
-      {/* Sidebar navigation */}
-      <aside className="w-full md:w-64 bg-black/40 backdrop-blur-xl border-b md:border-b-0 md:border-r border-white/10 p-6 flex flex-col justify-between z-10">
+      {/* ═══ SIDEBAR ════════════════════════════════════════════════════════════ */}
+      <aside className="w-full md:w-64 bg-black/50 backdrop-blur-xl border-b md:border-b-0 md:border-r border-white/10 p-5 flex flex-col justify-between z-10">
         <div>
-          {/* Logo / Branding */}
-          <div className="mb-8 flex items-center justify-between">
-            <h1 className="text-xl font-bold font-serif tracking-widest bg-gradient-to-r from-[#bfa37a] to-[#dfcfb9] bg-clip-text text-transparent">
+          <div className="mb-6 flex items-center justify-between">
+            <h1 className="text-lg font-bold font-serif tracking-widest bg-gradient-to-r from-[#bfa37a] to-[#dfcfb9] bg-clip-text text-transparent">
               MIM Admin
             </h1>
             <button
               onClick={() => navigate("/")}
-              className="text-xs text-gray-400 hover:text-white flex items-center gap-1 border border-white/10 px-2 py-1 rounded bg-white/5"
+              className="text-xs text-gray-400 hover:text-white flex items-center gap-1 border border-white/10 px-2 py-1 rounded-lg bg-white/5 hover:bg-white/10 transition"
             >
               <ChevronLeft className="w-3.5 h-3.5" /> Site
             </button>
           </div>
 
-          <div className="text-xs text-gray-500 mb-6 font-mono truncate">
-            {userEmail}
+          <div className="flex items-center gap-2 mb-6 p-3 rounded-xl bg-white/[0.03] border border-white/[0.07]">
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#bfa37a] to-[#dfcfb9] flex items-center justify-center text-black font-bold text-xs flex-shrink-0">
+              {userEmail?.charAt(0).toUpperCase() || "A"}
+            </div>
+            <span className="text-xs text-gray-400 font-mono truncate">{userEmail}</span>
           </div>
 
-          {/* Navigation Items */}
-          <nav className="space-y-2">
-            <button
-              onClick={() => setActiveTab("website")}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 font-medium ${
-                activeTab === "website"
-                  ? "bg-gradient-to-r from-[#bfa37a]/20 to-[#dfcfb9]/20 border-l-4 border-[#bfa37a] text-white shadow-lg shadow-[#bfa37a]/5"
-                  : "text-gray-400 hover:text-white hover:bg-white/5"
-              }`}
-            >
-              <Globe className="w-5 h-5 text-[#bfa37a]" />
-              Website
-            </button>
-
-            <button
-              onClick={() => setActiveTab("design")}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 font-medium ${
-                activeTab === "design"
-                  ? "bg-gradient-to-r from-[#bfa37a]/20 to-[#dfcfb9]/20 border-l-4 border-[#bfa37a] text-white shadow-lg shadow-[#bfa37a]/5"
-                  : "text-gray-400 hover:text-white hover:bg-white/5"
-              }`}
-            >
-              <Palette className="w-5 h-5 text-[#bfa37a]" />
-              Design
-            </button>
-
-            <button
-              onClick={() => setActiveTab("video")}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 font-medium ${
-                activeTab === "video"
-                  ? "bg-gradient-to-r from-[#bfa37a]/20 to-[#dfcfb9]/20 border-l-4 border-[#bfa37a] text-white shadow-lg shadow-[#bfa37a]/5"
-                  : "text-gray-400 hover:text-white hover:bg-white/5"
-              }`}
-            >
-              <Video className="w-5 h-5 text-[#bfa37a]" />
-              Video
-            </button>
-
-            <button
-              onClick={() => setActiveTab("certificates")}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 font-medium ${
-                activeTab === "certificates"
-                  ? "bg-gradient-to-r from-[#bfa37a]/20 to-[#dfcfb9]/20 border-l-4 border-[#bfa37a] text-white shadow-lg shadow-[#bfa37a]/5"
-                  : "text-gray-400 hover:text-white hover:bg-white/5"
-              }`}
-            >
-              <Award className="w-5 h-5 text-[#bfa37a]" />
-              Certificates
-            </button>
-
-            <button
-              onClick={() => setActiveTab("comments")}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 font-medium ${
-                activeTab === "comments"
-                  ? "bg-gradient-to-r from-[#bfa37a]/20 to-[#dfcfb9]/20 border-l-4 border-[#bfa37a] text-white shadow-lg shadow-[#bfa37a]/5"
-                  : "text-gray-400 hover:text-white hover:bg-white/5"
-              }`}
-            >
-              <MessageSquare className="w-5 h-5 text-[#bfa37a]" />
-              Comments
-            </button>
-
-            <button
-              onClick={() => setActiveTab("settings")}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 font-medium ${
-                activeTab === "settings"
-                  ? "bg-gradient-to-r from-[#bfa37a]/20 to-[#dfcfb9]/20 border-l-4 border-[#bfa37a] text-white shadow-lg shadow-[#bfa37a]/5"
-                  : "text-gray-400 hover:text-white hover:bg-white/5"
-              }`}
-            >
-              <Settings className="w-5 h-5 text-[#bfa37a]" />
-              Settings
-            </button>
+          <nav className="space-y-1">
+            {sidebarItems.map(({ key, label, icon: Icon, count }) => (
+              <button
+                key={key}
+                onClick={() => setActiveTab(key)}
+                className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl transition-all duration-300 font-medium text-sm ${
+                  activeTab === key
+                    ? "bg-gradient-to-r from-[#bfa37a]/20 to-[#dfcfb9]/20 border border-[#bfa37a]/20 text-white"
+                    : "text-gray-400 hover:text-white hover:bg-white/5"
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <Icon className={`w-4 h-4 ${activeTab === key ? "text-[#bfa37a]" : ""}`} />
+                  {label}
+                </div>
+                {count !== undefined && (
+                  <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-mono ${
+                    activeTab === key ? "bg-[#bfa37a]/20 text-[#dfcfb9]" : "bg-white/5 text-gray-500"
+                  }`}>
+                    {count}
+                  </span>
+                )}
+              </button>
+            ))}
           </nav>
+
+          {/* Category quick links */}
+          <div className="mt-4 pt-4 border-t border-white/5">
+            <p className="text-[10px] text-gray-500 uppercase tracking-wider mb-2 px-1 font-semibold">Kategori Project</p>
+            {CATEGORIES.map(({ key, label, icon: Icon }) => (
+              <button
+                key={key}
+                onClick={() => { setActiveTab("projects"); setFilterCat(key); }}
+                className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs transition-all duration-200 ${
+                  activeTab === "projects" && filterCat === key
+                    ? "text-white bg-white/5"
+                    : "text-gray-500 hover:text-gray-300 hover:bg-white/[0.03]"
+                }`}
+              >
+                <Icon className="w-3.5 h-3.5" />
+                {label}
+                <span className="ml-auto text-[10px] text-gray-600">
+                  {projects.filter(p => p.Category?.toLowerCase() === key).length}
+                </span>
+              </button>
+            ))}
+          </div>
         </div>
 
-        {/* Logout button */}
         <button
           onClick={handleLogout}
-          className="mt-8 flex items-center gap-3 px-4 py-3 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-xl transition-all duration-300 w-full text-left font-medium border border-transparent hover:border-red-500/20"
+          className="mt-6 flex items-center gap-3 px-3 py-2.5 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-xl transition-all duration-300 w-full text-left text-sm font-medium border border-transparent hover:border-red-500/20"
         >
-          <LogOut className="w-5 h-5" />
-          Logout
+          <LogOut className="w-4 h-4" /> Logout
         </button>
       </aside>
 
-      {/* Main Panel Content */}
-      <main className="flex-1 p-6 md:p-10 z-10 max-w-5xl mx-auto w-full overflow-y-auto">
-        <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-white/5 pb-6 mb-8 gap-4">
-          <div>
-            <h2 className="text-3xl font-bold font-serif capitalize">
-              {activeTab === "website" ? "Website Projects" : activeTab === "design" ? "Design Projects" : activeTab === "video" ? "Video Projects" : activeTab}
-            </h2>
-            <p className="text-gray-400 text-sm mt-1">
-              {activeTab === "settings" ? "Configure your portfolio website settings and experience metrics." : `Add, update, or remove ${activeTab} content shown on your live portfolio.`}
-            </p>
-          </div>
-          
-          {["website", "design", "video"].includes(activeTab) && (
-            <button
-              onClick={() => openProjectModal()}
-              className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#bfa37a] to-[#dfcfb9] text-black font-semibold text-sm hover:opacity-90 transition duration-300 shadow-md shadow-[#bfa37a]/15"
-            >
-              <Plus className="w-4 h-4" /> Upload {activeTab === "website" ? "Website" : activeTab === "design" ? "Design" : "Video"}
-            </button>
-          )}
+      {/* ═══ MAIN CONTENT ════════════════════════════════════════════════════════ */}
+      <main className="flex-1 p-5 md:p-8 z-10 overflow-y-auto">
 
-          {activeTab === "certificates" && (
-            <button
-              onClick={openCertModal}
-              className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#bfa37a] to-[#dfcfb9] text-black font-semibold text-sm hover:opacity-90 transition duration-300 shadow-md shadow-[#bfa37a]/15"
-            >
-              <Plus className="w-4 h-4" /> Add Certificate
-            </button>
-          )}
-        </header>
+        {/* ─── PROJECTS TAB ─────────────────────────────────────────────────── */}
+        {activeTab === "projects" && (
+          <>
+            {/* Header */}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+              <div>
+                <h2 className="text-2xl font-bold font-serif">Semua Project</h2>
+                <p className="text-gray-400 text-sm mt-0.5">Kelola semua project portfolio kamu di sini.</p>
+              </div>
+              <button
+                onClick={() => openProjectModal(null, filterCat === "all" ? "website" : filterCat)}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#bfa37a] to-[#dfcfb9] text-black font-semibold text-sm hover:opacity-90 transition shadow-md shadow-[#bfa37a]/15 flex-shrink-0"
+              >
+                <Plus className="w-4 h-4" /> Tambah Project
+              </button>
+            </div>
 
-        {loading && projects.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-20 text-gray-500">
-            <Loader2 className="w-10 h-10 animate-spin text-[#bfa37a] mb-4" />
-            <p>Loading portfolio data...</p>
-          </div>
+            {/* Category filter pills */}
+            <div className="flex flex-wrap gap-2 mb-5">
+              {[{ key: "all", label: "Semua", icon: LayoutGrid }, ...CATEGORIES].map(({ key, label, icon: Icon }) => (
+                <button
+                  key={key}
+                  onClick={() => setFilterCat(key)}
+                  className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-medium transition-all duration-200 border ${
+                    filterCat === key
+                      ? "bg-gradient-to-r from-[#bfa37a] to-[#dfcfb9] text-black border-transparent shadow-md shadow-[#bfa37a]/20"
+                      : "border-white/10 text-gray-400 hover:text-white hover:border-white/20 bg-white/[0.03]"
+                  }`}
+                >
+                  <Icon className="w-3.5 h-3.5" /> {label}
+                  <span className="ml-0.5 opacity-60">
+                    {key === "all" ? projects.length : projects.filter(p => p.Category?.toLowerCase() === key).length}
+                  </span>
+                </button>
+              ))}
+            </div>
+
+            {/* Loading */}
+            {loading && projects.length === 0 && (
+              <div className="flex flex-col items-center justify-center py-24 text-gray-500">
+                <Loader2 className="w-10 h-10 animate-spin text-[#bfa37a] mb-4" />
+                <p>Memuat data...</p>
+              </div>
+            )}
+
+            {/* Project grid */}
+            {!loading && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+                {filteredProjects.map((project) => {
+                  const catConfig = CATEGORIES.find(c => c.key === project.Category?.toLowerCase());
+                  const CatIcon = catConfig?.icon || Globe;
+                  return (
+                    <div key={project.id} className="group relative rounded-2xl border border-white/[0.08] bg-black/40 backdrop-blur-md hover:border-[#bfa37a]/30 hover:shadow-lg hover:shadow-[#bfa37a]/5 transition-all duration-300 flex flex-col overflow-hidden">
+                      {/* Thumbnail */}
+                      <div className="aspect-video w-full bg-slate-900 relative overflow-hidden">
+                        <img
+                          src={project.Img}
+                          alt={project.Title}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        />
+                        {/* Category badge */}
+                        <div className="absolute top-2 left-2">
+                          <span className={`inline-flex items-center gap-1 text-[9px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full border border-white/10 bg-black/60 backdrop-blur-sm ${catConfig?.accent || "text-gray-400"}`}>
+                            <CatIcon className="w-2.5 h-2.5" /> {project.Category}
+                          </span>
+                        </div>
+                        {/* View link overlay */}
+                        {project.Link && (
+                          <a
+                            href={project.Link}
+                            target="_blank"
+                            rel="noreferrer"
+                            onClick={e => e.stopPropagation()}
+                            className="absolute top-2 right-2 p-1.5 rounded-lg bg-black/60 backdrop-blur-sm border border-white/10 text-gray-300 hover:text-white opacity-0 group-hover:opacity-100 transition-all duration-200"
+                          >
+                            <Eye className="w-3.5 h-3.5" />
+                          </a>
+                        )}
+                      </div>
+
+                      {/* Info */}
+                      <div className="p-4 flex flex-col flex-1 gap-3">
+                        <div>
+                          <h3 className="text-sm font-semibold text-[#dfcfb9] font-serif leading-tight line-clamp-1">{project.Title}</h3>
+                          <p className="text-gray-500 text-xs leading-relaxed line-clamp-2 mt-1 font-light">{project.Description}</p>
+                        </div>
+
+                        {/* Actions */}
+                        <div className="flex items-center gap-2 mt-auto pt-3 border-t border-white/5">
+                          <button
+                            onClick={() => openProjectModal(project)}
+                            className="flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 text-xs transition"
+                          >
+                            <Edit className="w-3 h-3" /> Edit
+                          </button>
+                          <button
+                            onClick={() => deleteProject(project.id)}
+                            className="flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 text-red-400 text-xs transition"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+
+                {/* Empty state */}
+                {filteredProjects.length === 0 && (
+                  <div className="col-span-3 flex flex-col items-center justify-center py-24 text-gray-500 border border-dashed border-white/10 rounded-2xl gap-3">
+                    <LayoutGrid className="w-10 h-10 opacity-30" />
+                    <p className="text-sm">Belum ada project {filterCat !== "all" ? `kategori "${filterCat}"` : ""}.</p>
+                    <button
+                      onClick={() => openProjectModal(null, filterCat === "all" ? "website" : filterCat)}
+                      className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#bfa37a]/10 border border-[#bfa37a]/20 text-[#dfcfb9] text-xs font-medium hover:bg-[#bfa37a]/15 transition"
+                    >
+                      <Plus className="w-3.5 h-3.5" /> Tambah Project Pertama
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+          </>
         )}
 
-        {/* TAB PROJECTS */}
-        {["website", "design", "video"].includes(activeTab) && !loading && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {projects
-              .filter((project) => project.Category?.toLowerCase() === activeTab)
-              .map((project) => (
-                <div key={project.id} className="group relative rounded-xl border border-white/10 bg-black/40 p-5 backdrop-blur-md hover:border-[#bfa37a]/30 transition-all duration-300 flex flex-col justify-between">
-                  <div className="space-y-4">
-                    {/* Image Preview */}
-                    <div className="aspect-video w-full rounded-lg overflow-hidden bg-slate-900 border border-white/5 relative">
-                      <img 
-                        src={project.Img} 
-                        alt={project.Title}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                      />
-                    </div>
-                    
-                    {/* Text Details */}
-                    <div className="space-y-2">
-                      <div className="flex justify-between items-start gap-4">
-                        <h3 className="text-xl font-semibold text-[#dfcfb9] font-serif tracking-wide">{project.Title}</h3>
-                        <span className="text-[10px] uppercase font-semibold tracking-wider px-2 py-0.5 rounded border border-white/10 bg-white/5 text-gray-400 flex-shrink-0">
-                          {project.Category || "project"}
-                        </span>
-                      </div>
-                      <p className="text-gray-400 text-sm leading-relaxed line-clamp-3 font-light">{project.Description}</p>
-                      {project.Link && (
-                        <a 
-                          href={project.Link} 
-                          target="_blank" 
-                          rel="noreferrer"
-                          className="inline-flex items-center gap-1.5 text-xs text-[#bfa37a] hover:underline"
-                        >
-                          Live Demo <ExternalLink className="w-3 h-3" />
-                        </a>
-                      )}
-                    </div>
-                  </div>
+        {/* ─── CERTIFICATES TAB ──────────────────────────────────────────────── */}
+        {activeTab === "certificates" && (
+          <>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+              <div>
+                <h2 className="text-2xl font-bold font-serif">Sertifikat</h2>
+                <p className="text-gray-400 text-sm mt-0.5">Upload dan kelola sertifikat yang ditampilkan di portfolio.</p>
+              </div>
+              <button
+                onClick={() => openCertModal()}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#bfa37a] to-[#dfcfb9] text-black font-semibold text-sm hover:opacity-90 transition shadow-md shadow-[#bfa37a]/15 flex-shrink-0"
+              >
+                <Plus className="w-4 h-4" /> Tambah Sertifikat
+              </button>
+            </div>
 
-                  {/* Card Controls */}
-                  <div className="flex items-center gap-3 mt-6 border-t border-white/5 pt-4">
+            {loading && certificates.length === 0 && (
+              <div className="flex flex-col items-center justify-center py-24 text-gray-500">
+                <Loader2 className="w-10 h-10 animate-spin text-[#bfa37a] mb-4" />
+                <p>Memuat sertifikat...</p>
+              </div>
+            )}
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-4">
+              {certificates.map((cert) => (
+                <div key={cert.id} className="group relative rounded-2xl border border-white/[0.08] bg-black/40 backdrop-blur-md hover:border-[#bfa37a]/30 transition-all duration-300 overflow-hidden">
+                  <div className="aspect-[4/3] w-full bg-slate-900 relative overflow-hidden">
+                    <img
+                      src={cert.Img}
+                      alt={cert.Title || "Certificate"}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    />
+                  </div>
+                  {cert.Title && (
+                    <div className="px-3 pt-2 pb-1">
+                      <p className="text-xs text-gray-300 font-light truncate">{cert.Title}</p>
+                    </div>
+                  )}
+                  <div className="flex gap-2 p-3">
                     <button
-                      onClick={() => openProjectModal(project)}
-                      className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 text-xs transition duration-200"
+                      onClick={() => openCertModal(cert)}
+                      className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-xs transition"
                     >
-                      <Edit className="w-3.5 h-3.5" /> Edit Details
+                      <Edit className="w-3 h-3" /> Edit
                     </button>
                     <button
-                      onClick={() => deleteProject(project.id)}
-                      className="flex items-center justify-center gap-2 px-3.5 py-2 rounded-lg bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 text-red-400 text-xs transition duration-200"
+                      onClick={() => deleteCert(cert.id)}
+                      className="flex items-center justify-center px-3 py-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 text-red-400 text-xs transition"
                     >
-                      <Trash2 className="w-3.5 h-3.5" />
+                      <Trash2 className="w-3 h-3" />
                     </button>
                   </div>
                 </div>
               ))}
 
-            {projects.filter((project) => project.Category?.toLowerCase() === activeTab).length === 0 && (
-              <div className="col-span-2 text-center py-20 text-gray-500 border border-dashed border-white/10 rounded-2xl">
-                No {activeTab} projects found. Add your first project using the button above.
-              </div>
-            )}
-          </div>
+              {certificates.length === 0 && !loading && (
+                <div className="col-span-4 flex flex-col items-center justify-center py-24 text-gray-500 border border-dashed border-white/10 rounded-2xl gap-3">
+                  <Award className="w-10 h-10 opacity-30" />
+                  <p className="text-sm">Belum ada sertifikat.</p>
+                  <button
+                    onClick={() => openCertModal()}
+                    className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#bfa37a]/10 border border-[#bfa37a]/20 text-[#dfcfb9] text-xs font-medium hover:bg-[#bfa37a]/15 transition"
+                  >
+                    <Plus className="w-3.5 h-3.5" /> Upload Sertifikat Pertama
+                  </button>
+                </div>
+              )}
+            </div>
+          </>
         )}
 
-        {/* TAB CERTIFICATES */}
-        {activeTab === "certificates" && !loading && (
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-6">
-            {certificates.map((cert) => (
-              <div key={cert.id} className="group relative rounded-xl border border-white/10 bg-black/40 p-3 backdrop-blur-md hover:border-[#bfa37a]/30 transition-all duration-300">
-                <div className="aspect-[4/3] w-full rounded-lg overflow-hidden bg-slate-900 border border-white/5 mb-3 relative">
-                  <img 
-                    src={cert.Img} 
-                    alt="Certificate"
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                  />
+        {/* ─── COMMENTS TAB ──────────────────────────────────────────────────── */}
+        {activeTab === "comments" && (
+          <>
+            <div className="mb-6">
+              <h2 className="text-2xl font-bold font-serif">Komentar Pengunjung</h2>
+              <p className="text-gray-400 text-sm mt-0.5">Kelola dan pin komentar yang ditampilkan di portfolio.</p>
+            </div>
+            <div className="space-y-3">
+              {comments.map((comment) => (
+                <div key={comment.id} className="relative rounded-2xl border border-white/[0.08] bg-black/40 p-4 backdrop-blur-md hover:border-white/15 transition-all duration-300 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                  <div className="flex gap-3">
+                    <div className="w-10 h-10 rounded-full overflow-hidden border border-white/10 bg-slate-900 flex-shrink-0 flex items-center justify-center text-gray-400 font-bold text-sm">
+                      {comment.profile_image
+                        ? <img src={comment.profile_image} alt={comment.user_name} className="w-full h-full object-cover" />
+                        : comment.user_name?.charAt(0).toUpperCase() || "A"}
+                    </div>
+                    <div className="space-y-0.5">
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold text-gray-200 text-sm">{comment.user_name}</span>
+                        {comment.is_pinned && (
+                          <span className="inline-flex items-center gap-1 text-[9px] font-semibold text-[#bfa37a] bg-[#bfa37a]/10 px-1.5 py-0.5 rounded-full border border-[#bfa37a]/20">
+                            <Pin className="w-2.5 h-2.5 fill-[#bfa37a]" /> Pinned
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-gray-400 text-xs leading-relaxed">{comment.content}</p>
+                      <p className="text-gray-600 text-[10px] font-mono">{new Date(comment.created_at).toLocaleString("id-ID")}</p>
+                    </div>
+                  </div>
+                  <div className="flex gap-2 w-full md:w-auto border-t md:border-t-0 border-white/5 pt-3 md:pt-0">
+                    <button
+                      onClick={() => togglePinComment(comment)}
+                      className={`flex-1 md:flex-none flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs transition ${
+                        comment.is_pinned
+                          ? "bg-[#bfa37a]/15 text-[#dfcfb9] border-[#bfa37a]/30 hover:bg-[#bfa37a]/25"
+                          : "bg-white/5 text-gray-400 border-white/10 hover:text-white"
+                      }`}
+                    >
+                      <Pin className={`w-3 h-3 ${comment.is_pinned ? "fill-[#dfcfb9]" : ""}`} />
+                      {comment.is_pinned ? "Unpin" : "Pin"}
+                    </button>
+                    <button
+                      onClick={() => deleteComment(comment.id)}
+                      className="flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 text-red-400 text-xs transition"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                    </button>
+                  </div>
                 </div>
-                
+              ))}
+              {comments.length === 0 && (
+                <div className="text-center py-24 text-gray-500 border border-dashed border-white/10 rounded-2xl">
+                  Belum ada komentar pengunjung.
+                </div>
+              )}
+            </div>
+          </>
+        )}
+
+        {/* ─── SETTINGS TAB ──────────────────────────────────────────────────── */}
+        {activeTab === "settings" && (
+          <>
+            <div className="mb-6">
+              <h2 className="text-2xl font-bold font-serif">Pengaturan</h2>
+              <p className="text-gray-400 text-sm mt-0.5">Konfigurasi tampilan portfolio kamu.</p>
+            </div>
+            <div className="max-w-xl rounded-2xl border border-white/10 bg-black/40 p-6 backdrop-blur-md">
+              <h3 className="text-lg font-bold font-serif mb-1 text-[#dfcfb9]">Tahun Pengalaman</h3>
+              <p className="text-gray-400 text-sm mb-5 leading-relaxed">
+                Atur tanggal mulai pengalaman kamu. Sistem akan menghitung otomatis jumlah tahun yang ditampilkan. Kamu juga bisa tulis angka langsung (misal "5").
+              </p>
+              <div className="space-y-4">
+                <Field label="Tanggal Mulai / Angka" icon={Settings}>
+                  <input
+                    type="text"
+                    value={experienceValue}
+                    onChange={(e) => setExperienceValue(e.target.value)}
+                    placeholder="YYYY-MM-DD atau angka (misal 2021-11-06 atau 5)"
+                    className={inputCls}
+                  />
+                </Field>
+                <div className="p-4 rounded-xl bg-white/5 border border-white/5">
+                  <span className="text-[10px] text-gray-500 uppercase tracking-wider block font-semibold mb-1">Preview di Site</span>
+                  <span className="text-base font-serif font-bold text-white">
+                    {(() => {
+                      const num = parseInt(experienceValue, 10);
+                      if (!isNaN(num) && num.toString() === experienceValue?.toString().trim()) return `${num} Tahun Pengalaman`;
+                      const date = new Date(experienceValue);
+                      if (!isNaN(date.getTime())) {
+                        const today = new Date();
+                        const computed = today.getFullYear() - date.getFullYear() - (today < new Date(today.getFullYear(), date.getMonth(), date.getDate()) ? 1 : 0);
+                        return `${computed} Tahun Pengalaman (Kalkulasi)`;
+                      }
+                      return "Input tidak valid (fallback ke 4 Tahun)";
+                    })()}
+                  </span>
+                </div>
                 <button
-                  onClick={() => deleteCert(cert.id)}
-                  className="w-full flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 text-red-400 text-xs transition duration-200"
+                  onClick={() => saveExperienceSetting(experienceValue)}
+                  disabled={loading}
+                  className="w-full flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#bfa37a] to-[#dfcfb9] text-black font-semibold text-sm hover:opacity-90 transition disabled:opacity-50"
                 >
-                  <Trash2 className="w-3.5 h-3.5" /> Delete
+                  {loading ? "Menyimpan..." : "Simpan Pengaturan"}
                 </button>
               </div>
-            ))}
-
-            {certificates.length === 0 && (
-              <div className="col-span-3 text-center py-20 text-gray-500 border border-dashed border-white/10 rounded-2xl">
-                No certificates found. Add your first certificate using the button above.
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* TAB COMMENTS */}
-        {activeTab === "comments" && !loading && (
-          <div className="space-y-4">
-            {comments.map((comment) => (
-              <div key={comment.id} className="relative rounded-xl border border-white/10 bg-black/40 p-5 backdrop-blur-md hover:border-white/20 transition-all duration-300 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                <div className="flex gap-4">
-                  {/* User Profile Avatar */}
-                  <div className="w-12 h-12 rounded-full overflow-hidden border border-white/10 bg-slate-900 flex-shrink-0 flex items-center justify-center text-gray-400 font-bold">
-                    {comment.profile_image ? (
-                      <img src={comment.profile_image} alt={comment.user_name} className="w-full h-full object-cover" />
-                    ) : (
-                      comment.user_name?.charAt(0).toUpperCase() || "A"
-                    )}
-                  </div>
-                  
-                  {/* Comment info */}
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <span className="font-semibold text-gray-200">{comment.user_name}</span>
-                      {comment.is_pinned && (
-                        <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-[#bfa37a] bg-[#bfa37a]/10 px-2 py-0.5 rounded-full border border-[#bfa37a]/20">
-                          <Pin className="w-3 h-3 fill-[#bfa37a]" /> Pinned
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-gray-300 text-sm leading-relaxed font-light">{comment.content}</p>
-                    <div className="text-gray-500 text-[10px] font-mono">
-                      {new Date(comment.created_at).toLocaleString()}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Comment Actions */}
-                <div className="flex gap-2 w-full md:w-auto border-t md:border-t-0 border-white/5 pt-3 md:pt-0">
-                  <button
-                    onClick={() => togglePinComment(comment)}
-                    className={`flex-1 md:flex-none flex items-center justify-center gap-2 px-3.5 py-2 rounded-lg border text-xs transition duration-200 ${
-                      comment.is_pinned
-                        ? "bg-[#bfa37a]/15 text-[#dfcfb9] border-[#bfa37a]/30 hover:bg-[#bfa37a]/25"
-                        : "bg-white/5 text-gray-400 border-white/10 hover:text-white hover:border-white/20"
-                    }`}
-                  >
-                    <Pin className={`w-3.5 h-3.5 ${comment.is_pinned ? "fill-[#dfcfb9]" : ""}`} /> 
-                    {comment.is_pinned ? "Unpin" : "Pin Comment"}
-                  </button>
-
-                  <button
-                    onClick={() => deleteComment(comment.id)}
-                    className="flex items-center justify-center gap-2 px-3.5 py-2 rounded-lg bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 text-red-400 text-xs transition duration-200"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              </div>
-            ))}
-
-            {comments.length === 0 && (
-              <div className="text-center py-20 text-gray-500 border border-dashed border-white/10 rounded-2xl">
-                No visitor comments found.
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* TAB SETTINGS */}
-        {activeTab === "settings" && !loading && (
-          <div className="max-w-xl rounded-xl border border-white/10 bg-black/40 p-6 backdrop-blur-md hover:border-[#bfa37a]/30 transition-all duration-300 font-sans">
-            <h3 className="text-xl font-bold font-serif mb-4 text-[#dfcfb9]">Years of Experience</h3>
-            <p className="text-gray-400 text-sm mb-6 leading-relaxed">
-              Adjust the starting date of your experience. The system will dynamically calculate the years of experience shown on the public site. You can also type a direct number (e.g. "5") if you prefer a fixed count.
-            </p>
-            
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <label className="text-xs font-semibold text-gray-300 uppercase tracking-wider block">Start Date / Numeric Value</label>
-                <input
-                  type="text"
-                  value={experienceValue}
-                  onChange={(e) => setExperienceValue(e.target.value)}
-                  placeholder="YYYY-MM-DD or numeric value (e.g. 2021-11-06 or 5)"
-                  className="block w-full px-4 py-3 border border-white/10 rounded-xl bg-black/40 text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-[#bfa37a] focus:border-[#bfa37a] text-sm"
-                />
-              </div>
-
-              {/* Live Preview */}
-              <div className="p-4 rounded-lg bg-white/5 border border-white/5 space-y-1">
-                <span className="text-[11px] text-gray-500 uppercase tracking-wider block font-semibold">Live Preview on Site</span>
-                <span className="text-lg font-serif font-bold text-white">
-                  {(() => {
-                    const num = parseInt(experienceValue, 10);
-                    if (!isNaN(num) && num.toString() === experienceValue?.toString().trim()) {
-                      return `${num} Years of Experience`;
-                    }
-                    const date = new Date(experienceValue);
-                    if (!isNaN(date.getTime())) {
-                      const today = new Date();
-                      const computed = today.getFullYear() - date.getFullYear() -
-                        (today < new Date(today.getFullYear(), date.getMonth(), date.getDate()) ? 1 : 0);
-                      return `${computed} Years of Experience (Calculated)`;
-                    }
-                    return "Invalid input (will fall back to 4 Years)";
-                  })()}
-                </span>
-              </div>
-
-              <button
-                onClick={() => saveExperienceSetting(experienceValue)}
-                disabled={loading}
-                className="w-full flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#bfa37a] to-[#dfcfb9] text-black font-semibold text-sm hover:opacity-90 transition duration-300 shadow-md shadow-[#bfa37a]/15 disabled:opacity-50"
-              >
-                {loading ? "Saving..." : "Save Settings"}
-              </button>
             </div>
-          </div>
+          </>
         )}
       </main>
 
-      {/* ==================== WEBSITE PROJECT MODAL ==================== */}
-      {activeModal === "website" && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md">
-          <div className="relative w-full max-w-xl rounded-2xl border border-white/10 bg-[#0a0a0c] p-6 sm:p-8 shadow-2xl overflow-y-auto max-h-[90vh]">
-            <button 
-              onClick={() => setActiveModal(null)}
-              className="absolute top-4 right-4 text-gray-400 hover:text-white transition"
-            >
-              <X className="w-5 h-5" />
-            </button>
+      {/* ═══ PROJECT MODAL ═══════════════════════════════════════════════════════ */}
+      {showProjectModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+          <div className="relative w-full max-w-2xl rounded-2xl border border-white/10 bg-[#080809] shadow-2xl overflow-y-auto max-h-[92vh]">
+            {/* Modal header */}
+            <div className="sticky top-0 z-10 flex items-center justify-between px-6 py-4 border-b border-white/[0.07] bg-[#080809]/90 backdrop-blur-sm">
+              <div>
+                <h3 className="text-xl font-bold font-serif text-[#dfcfb9]">
+                  {currentProject.id ? "Edit Project" : "Tambah Project Baru"}
+                </h3>
+                <p className="text-gray-500 text-xs mt-0.5">Isi semua field yang diperlukan</p>
+              </div>
+              <button onClick={() => setShowProjectModal(false)} className="p-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
 
-            <h3 className="text-2xl font-bold font-serif mb-6 text-[#dfcfb9]">
-              {currentProject.id ? "Edit Website Details" : "Upload New Website"}
-            </h3>
+            <form onSubmit={saveProject} className="p-6 space-y-5">
+              {/* Category selector */}
+              <Field label="Kategori Project" icon={LayoutGrid}>
+                <div className="grid grid-cols-3 gap-2">
+                  {CATEGORIES.map(({ key, label, icon: Icon, color }) => (
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={() => setCurrentProject({ ...currentProject, Category: key })}
+                      className={`flex flex-col items-center gap-1.5 p-3 rounded-xl border text-xs font-medium transition-all duration-200 ${
+                        currentProject.Category === key
+                          ? `bg-gradient-to-br ${color} border-white/20 text-white scale-[1.02] shadow-md`
+                          : "border-white/10 text-gray-400 hover:border-white/20 hover:text-white hover:bg-white/5"
+                      }`}
+                    >
+                      <Icon className="w-5 h-5" />
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </Field>
 
-            <form onSubmit={saveProject} className="space-y-6">
               {/* Title */}
-              <div className="space-y-2">
-                <label className="text-xs font-semibold text-gray-300 uppercase tracking-wider">Website Title</label>
+              <Field label="Judul Project" icon={FileImage}>
                 <input
                   type="text"
                   value={currentProject.Title}
                   onChange={(e) => setCurrentProject({ ...currentProject, Title: e.target.value })}
-                  placeholder="e.g. Portfolio Website V5"
-                  className="block w-full px-4 py-3 border border-white/10 rounded-xl bg-black/40 text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-[#bfa37a] focus:border-[#bfa37a] text-sm"
+                  placeholder={
+                    currentProject.Category === "website" ? "cth: Portfolio Website V5" :
+                    currentProject.Category === "design" ? "cth: Brand Identity Obsidian Cafe" :
+                    "cth: Cinematic Travel Reel 2025"
+                  }
+                  className={inputCls}
                   required
                 />
-              </div>
+              </Field>
 
               {/* Description */}
-              <div className="space-y-2">
-                <label className="text-xs font-semibold text-gray-300 uppercase tracking-wider">Description</label>
+              <Field label="Deskripsi" icon={MessageSquare}>
                 <textarea
                   value={currentProject.Description}
                   onChange={(e) => setCurrentProject({ ...currentProject, Description: e.target.value })}
-                  placeholder="Describe your website architecture, features, and target audience..."
-                  rows={4}
-                  className="block w-full px-4 py-3 border border-white/10 rounded-xl bg-black/40 text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-[#bfa37a] focus:border-[#bfa37a] text-sm"
-                  required
-                />
-              </div>
-
-              {/* Link */}
-              <div className="space-y-2">
-                <label className="text-xs font-semibold text-gray-300 uppercase tracking-wider flex items-center gap-1.5">
-                  <Globe className="w-3.5 h-3.5" /> Live Demo Link (Optional)
-                </label>
-                <input
-                  type="url"
-                  value={currentProject.Link}
-                  onChange={(e) => setCurrentProject({ ...currentProject, Link: e.target.value })}
-                  placeholder="https://mywebsite.com"
-                  className="block w-full px-4 py-3 border border-white/10 rounded-xl bg-black/40 text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-[#bfa37a] focus:border-[#bfa37a] text-sm"
-                />
-              </div>
-
-              {/* Github Repository Link */}
-              <div className="space-y-2">
-                <label className="text-xs font-semibold text-gray-300 uppercase tracking-wider flex items-center gap-1.5">
-                  <FolderGit2 className="w-3.5 h-3.5" /> GitHub Repository Link (Optional)
-                </label>
-                <input
-                  type="text"
-                  value={currentProject.Github}
-                  onChange={(e) => setCurrentProject({ ...currentProject, Github: e.target.value })}
-                  placeholder="https://github.com/... or 'Private'"
-                  className="block w-full px-4 py-3 border border-white/10 rounded-xl bg-black/40 text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-[#bfa37a] focus:border-[#bfa37a] text-sm"
-                />
-              </div>
-
-              {/* Tech Stack */}
-              <div className="space-y-2">
-                <label className="text-xs font-semibold text-gray-300 uppercase tracking-wider">
-                  Tech Stack (separated by commas)
-                </label>
-                <input
-                  type="text"
-                  value={currentProject.TechStack}
-                  onChange={(e) => setCurrentProject({ ...currentProject, TechStack: e.target.value })}
-                  placeholder="React, Tailwind, Supabase"
-                  className="block w-full px-4 py-3 border border-white/10 rounded-xl bg-black/40 text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-[#bfa37a] focus:border-[#bfa37a] text-sm"
-                />
-              </div>
-
-              {/* Key Features */}
-              <div className="space-y-2">
-                <label className="text-xs font-semibold text-gray-300 uppercase tracking-wider">
-                  Key Features (one feature per line)
-                </label>
-                <textarea
-                  value={currentProject.Features}
-                  onChange={(e) => setCurrentProject({ ...currentProject, Features: e.target.value })}
-                  placeholder="Auth Integration&#10;Real-time Chat&#10;Stripe Checkout"
+                  placeholder="Jelaskan project ini, tujuan, fitur utama, dan teknologi yang digunakan..."
                   rows={3}
-                  className="block w-full px-4 py-3 border border-white/10 rounded-xl bg-[#000000]/40 text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-[#bfa37a] focus:border-[#bfa37a] text-sm"
+                  className={textareaCls}
+                  required
                 />
-              </div>
+              </Field>
 
-              {/* Image Input Selection */}
-              <div className="space-y-4 border-t border-white/5 pt-4">
-                <label className="text-xs font-semibold text-gray-300 uppercase tracking-wider block">Website Preview Image</label>
-
-                {/* Option 1: File Upload */}
-                <div className="space-y-2">
-                  <span className="text-[11px] text-gray-400">Option 1: Upload Image File</span>
-                  <label className="flex flex-col items-center justify-center w-full h-28 border border-dashed border-white/10 hover:border-[#bfa37a]/40 rounded-xl bg-black/20 cursor-pointer hover:bg-black/30 transition-colors">
-                    <div className="flex flex-col items-center justify-center pt-4 pb-4">
-                      {uploadingFile ? (
-                        <Loader2 className="w-6 h-6 animate-spin text-[#bfa37a] mb-2" />
-                      ) : (
-                        <Upload className="w-6 h-6 text-gray-400 mb-2" />
-                      )}
-                      <p className="text-xs text-gray-400">
-                        {uploadFile ? uploadFile.name : "Click to select a local image"}
-                      </p>
-                    </div>
-                    <input 
-                      type="file" 
-                      accept="image/*" 
-                      onChange={(e) => setUploadFile(e.target.files[0])} 
-                      className="hidden" 
-                    />
-                  </label>
-                </div>
-
-                {/* Option 2: Image URL */}
-                <div className="space-y-2">
-                  <span className="text-[11px] text-gray-400">Option 2: Direct Image URL</span>
-                  <div className="relative">
-                    <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-500">
-                      <FileImage className="w-4 h-4" />
-                    </span>
-                    <input
-                      type="text"
-                      value={currentProject.Img}
-                      onChange={(e) => setCurrentProject({ ...currentProject, Img: e.target.value })}
-                      placeholder="https://images.unsplash.com/..."
-                      className="block w-full pl-10 pr-4 py-3 border border-white/10 rounded-xl bg-black/40 text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-[#bfa37a] focus:border-[#bfa37a] text-sm"
-                      disabled={!!uploadFile}
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex justify-end gap-3 border-t border-white/5 pt-6 mt-6">
-                <button
-                  type="button"
-                  onClick={() => setActiveModal(null)}
-                  className="px-5 py-2.5 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition text-sm font-medium"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={loading || uploadingFile}
-                  className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#bfa37a] to-[#dfcfb9] text-black font-semibold text-sm hover:opacity-90 transition disabled:opacity-50"
-                >
-                  {loading ? "Saving..." : "Save Website"}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* ==================== DESIGN PROJECT MODAL ==================== */}
-      {activeModal === "design" && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md">
-          <div className="relative w-full max-w-xl rounded-2xl border border-white/10 bg-[#0a0a0c] p-6 sm:p-8 shadow-2xl overflow-y-auto max-h-[90vh]">
-            <button 
-              onClick={() => setActiveModal(null)}
-              className="absolute top-4 right-4 text-gray-400 hover:text-white transition"
-            >
-              <X className="w-5 h-5" />
-            </button>
-
-            <h3 className="text-2xl font-bold font-serif mb-6 text-[#dfcfb9]">
-              {currentProject.id ? "Edit Design Details" : "Upload New Design"}
-            </h3>
-
-            <form onSubmit={saveProject} className="space-y-6">
-              {/* Title */}
-              <div className="space-y-2">
-                <label className="text-xs font-semibold text-gray-300 uppercase tracking-wider">Design Title</label>
+              {/* Link — hide for design (no demo link usually) */}
+              <Field
+                label={currentProject.Category === "video" ? "URL Video / YouTube" : "Link Demo / Live"}
+                icon={Link2}
+                hint={currentProject.Category === "design" ? "Opsional — bisa link Behance, Dribbble, dll" : ""}
+              >
                 <input
                   type="text"
-                  value={currentProject.Title}
-                  onChange={(e) => setCurrentProject({ ...currentProject, Title: e.target.value })}
-                  placeholder="e.g. Modern Sofa Mockup"
-                  className="block w-full px-4 py-3 border border-white/10 rounded-xl bg-black/40 text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-[#bfa37a] focus:border-[#bfa37a] text-sm"
-                  required
-                />
-              </div>
-
-              {/* Description */}
-              <div className="space-y-2">
-                <label className="text-xs font-semibold text-gray-300 uppercase tracking-wider">Description</label>
-                <textarea
-                  value={currentProject.Description}
-                  onChange={(e) => setCurrentProject({ ...currentProject, Description: e.target.value })}
-                  placeholder="Explain the design concept, style palette, and materials used..."
-                  rows={4}
-                  className="block w-full px-4 py-3 border border-white/10 rounded-xl bg-black/40 text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-[#bfa37a] focus:border-[#bfa37a] text-sm"
-                  required
-                />
-              </div>
-
-              {/* Image Input Selection */}
-              <div className="space-y-4 border-t border-white/5 pt-4">
-                <label className="text-xs font-semibold text-gray-300 uppercase tracking-wider block">Design Artwork / Image File</label>
-
-                {/* Option 1: File Upload */}
-                <div className="space-y-2">
-                  <span className="text-[11px] text-gray-400">Option 1: Upload Image File</span>
-                  <label className="flex flex-col items-center justify-center w-full h-28 border border-dashed border-white/10 hover:border-[#bfa37a]/40 rounded-xl bg-black/20 cursor-pointer hover:bg-black/30 transition-colors">
-                    <div className="flex flex-col items-center justify-center pt-4 pb-4">
-                      {uploadingFile ? (
-                        <Loader2 className="w-6 h-6 animate-spin text-[#bfa37a] mb-2" />
-                      ) : (
-                        <Upload className="w-6 h-6 text-gray-400 mb-2" />
-                      )}
-                      <p className="text-xs text-gray-400">
-                        {uploadFile ? uploadFile.name : "Click to select a local image"}
-                      </p>
-                    </div>
-                    <input 
-                      type="file" 
-                      accept="image/*" 
-                      onChange={(e) => setUploadFile(e.target.files[0])} 
-                      className="hidden" 
-                    />
-                  </label>
-                </div>
-
-                {/* Option 2: Image URL */}
-                <div className="space-y-2">
-                  <span className="text-[11px] text-gray-400">Option 2: Direct Image URL</span>
-                  <div className="relative">
-                    <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-500">
-                      <FileImage className="w-4 h-4" />
-                    </span>
-                    <input
-                      type="text"
-                      value={currentProject.Img}
-                      onChange={(e) => setCurrentProject({ ...currentProject, Img: e.target.value })}
-                      placeholder="https://images.unsplash.com/..."
-                      className="block w-full pl-10 pr-4 py-3 border border-white/10 rounded-xl bg-black/40 text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-[#bfa37a] focus:border-[#bfa37a] text-sm"
-                      disabled={!!uploadFile}
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex justify-end gap-3 border-t border-white/5 pt-6 mt-6">
-                <button
-                  type="button"
-                  onClick={() => setActiveModal(null)}
-                  className="px-5 py-2.5 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition text-sm font-medium"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={loading || uploadingFile}
-                  className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#bfa37a] to-[#dfcfb9] text-black font-semibold text-sm hover:opacity-90 transition disabled:opacity-50"
-                >
-                  {loading ? "Saving..." : "Save Design"}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* ==================== VIDEO PROJECT MODAL ==================== */}
-      {activeModal === "video" && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md">
-          <div className="relative w-full max-w-xl rounded-2xl border border-white/10 bg-[#0a0a0c] p-6 sm:p-8 shadow-2xl overflow-y-auto max-h-[90vh]">
-            <button 
-              onClick={() => setActiveModal(null)}
-              className="absolute top-4 right-4 text-gray-400 hover:text-white transition"
-            >
-              <X className="w-5 h-5" />
-            </button>
-
-            <h3 className="text-2xl font-bold font-serif mb-6 text-[#dfcfb9]">
-              {currentProject.id ? "Edit Video Details" : "Upload New Video"}
-            </h3>
-
-            <form onSubmit={saveProject} className="space-y-6">
-              {/* Title */}
-              <div className="space-y-2">
-                <label className="text-xs font-semibold text-gray-300 uppercase tracking-wider">Video Title</label>
-                <input
-                  type="text"
-                  value={currentProject.Title}
-                  onChange={(e) => setCurrentProject({ ...currentProject, Title: e.target.value })}
-                  placeholder="e.g. Sofa restoration process"
-                  className="block w-full px-4 py-3 border border-white/10 rounded-xl bg-black/40 text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-[#bfa37a] focus:border-[#bfa37a] text-sm"
-                  required
-                />
-              </div>
-
-              {/* Description */}
-              <div className="space-y-2">
-                <label className="text-xs font-semibold text-gray-300 uppercase tracking-wider">Description</label>
-                <textarea
-                  value={currentProject.Description}
-                  onChange={(e) => setCurrentProject({ ...currentProject, Description: e.target.value })}
-                  placeholder="Provide details about the video clip, timeline, and camera gear used..."
-                  rows={4}
-                  className="block w-full px-4 py-3 border border-white/10 rounded-xl bg-black/40 text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-[#bfa37a] focus:border-[#bfa37a] text-sm"
-                  required
-                />
-              </div>
-
-              {/* Link */}
-              <div className="space-y-2">
-                <label className="text-xs font-semibold text-gray-300 uppercase tracking-wider flex items-center gap-1.5">
-                  <Video className="w-3.5 h-3.5" /> Video URL / YouTube Link
-                </label>
-                <input
-                  type="url"
                   value={currentProject.Link}
                   onChange={(e) => setCurrentProject({ ...currentProject, Link: e.target.value })}
-                  placeholder="https://youtube.com/watch?v=..."
-                  className="block w-full px-4 py-3 border border-white/10 rounded-xl bg-black/40 text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-[#bfa37a] focus:border-[#bfa37a] text-sm"
-                  required
+                  placeholder={
+                    currentProject.Category === "video" ? "https://youtube.com/watch?v=..." :
+                    currentProject.Category === "design" ? "https://behance.net/... (opsional)" :
+                    "https://mywebsite.com"
+                  }
+                  className={inputCls}
+                  required={currentProject.Category === "video"}
                 />
-              </div>
+              </Field>
 
-              {/* Image Input Selection */}
-              <div className="space-y-4 border-t border-white/5 pt-4">
-                <label className="text-xs font-semibold text-gray-300 uppercase tracking-wider block">Video Thumbnail Image</label>
+              {/* GitHub — only for website */}
+              {currentProject.Category === "website" && (
+                <Field label="Link GitHub Repository" icon={FolderGit2} hint="Opsional — tulis 'Private' jika repo privat">
+                  <input
+                    type="text"
+                    value={currentProject.Github}
+                    onChange={(e) => setCurrentProject({ ...currentProject, Github: e.target.value })}
+                    placeholder="https://github.com/... atau 'Private'"
+                    className={inputCls}
+                  />
+                </Field>
+              )}
 
-                {/* Option 1: File Upload */}
-                <div className="space-y-2">
-                  <span className="text-[11px] text-gray-400">Option 1: Upload Thumbnail File</span>
-                  <label className="flex flex-col items-center justify-center w-full h-28 border border-dashed border-white/10 hover:border-[#bfa37a]/40 rounded-xl bg-black/20 cursor-pointer hover:bg-black/30 transition-colors">
-                    <div className="flex flex-col items-center justify-center pt-4 pb-4">
-                      {uploadingFile ? (
-                        <Loader2 className="w-6 h-6 animate-spin text-[#bfa37a] mb-2" />
-                      ) : (
-                        <Upload className="w-6 h-6 text-gray-400 mb-2" />
-                      )}
-                      <p className="text-xs text-gray-400">
-                        {uploadFile ? uploadFile.name : "Click to select a local image"}
-                      </p>
-                    </div>
-                    <input 
-                      type="file" 
-                      accept="image/*" 
-                      onChange={(e) => setUploadFile(e.target.files[0])} 
-                      className="hidden" 
-                    />
-                  </label>
+              {/* Tech Stack — only for website/design */}
+              {["website", "design"].includes(currentProject.Category) && (
+                <Field label="Tech Stack / Tools (pisahkan dengan koma)" icon={Settings}>
+                  <input
+                    type="text"
+                    value={currentProject.TechStack}
+                    onChange={(e) => setCurrentProject({ ...currentProject, TechStack: e.target.value })}
+                    placeholder={currentProject.Category === "website" ? "React, Tailwind, Supabase" : "Figma, Adobe Illustrator, Canva"}
+                    className={inputCls}
+                  />
+                </Field>
+              )}
+
+              {/* Features — only for website */}
+              {currentProject.Category === "website" && (
+                <Field label="Fitur Utama (satu per baris)" icon={CheckCircle2}>
+                  <textarea
+                    value={currentProject.Features}
+                    onChange={(e) => setCurrentProject({ ...currentProject, Features: e.target.value })}
+                    placeholder={"Auth Integration\nReal-time Chat\nStripe Checkout"}
+                    rows={3}
+                    className={textareaCls}
+                  />
+                </Field>
+              )}
+
+              {/* Thumbnail / Image */}
+              <div className="border-t border-white/[0.07] pt-4 space-y-3">
+                <p className="text-[11px] font-semibold text-gray-300 uppercase tracking-wider">
+                  {currentProject.Category === "video" ? "Thumbnail Video" : currentProject.Category === "design" ? "File Gambar / Poster" : "Screenshot / Preview"}
+                </p>
+
+                {/* Upload zone */}
+                <div>
+                  <p className="text-[10px] text-gray-500 mb-1.5">Opsi 1: Upload dari Perangkat</p>
+                  <UploadZone
+                    uploadFile={uploadFile}
+                    setUploadFile={setUploadFile}
+                    uploadingFile={uploadingFile}
+                    accept="image/*"
+                    label={currentProject.Category === "design" ? "Poster/Gambar" : "Thumbnail"}
+                  />
                 </div>
 
-                {/* Option 2: Image URL */}
-                <div className="space-y-2">
-                  <span className="text-[11px] text-gray-400">Option 2: Direct Thumbnail URL</span>
+                {/* URL fallback */}
+                <div>
+                  <p className="text-[10px] text-gray-500 mb-1.5">Opsi 2: URL Gambar Langsung</p>
                   <div className="relative">
-                    <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-500">
-                      <FileImage className="w-4 h-4" />
-                    </span>
+                    <Image className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none" />
                     <input
                       type="text"
                       value={currentProject.Img}
                       onChange={(e) => setCurrentProject({ ...currentProject, Img: e.target.value })}
-                      placeholder="https://images.unsplash.com/... or Youtube image thumbnail URL"
-                      className="block w-full pl-10 pr-4 py-3 border border-white/10 rounded-xl bg-black/40 text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-[#bfa37a] focus:border-[#bfa37a] text-sm"
+                      placeholder="https://images.unsplash.com/..."
+                      className={`${inputCls} pl-10`}
                       disabled={!!uploadFile}
                     />
                   </div>
+                  {uploadFile && <p className="text-[10px] text-amber-400 mt-1">File dipilih — kolom URL dikunci.</p>}
                 </div>
+
+                {/* Current image preview */}
+                {currentProject.Img && !uploadFile && (
+                  <div className="rounded-xl overflow-hidden border border-white/10 aspect-video">
+                    <img src={currentProject.Img} alt="preview" className="w-full h-full object-cover" />
+                  </div>
+                )}
               </div>
 
-              {/* Action Buttons */}
-              <div className="flex justify-end gap-3 border-t border-white/5 pt-6 mt-6">
+              {/* Actions */}
+              <div className="flex justify-end gap-3 border-t border-white/[0.07] pt-5">
                 <button
                   type="button"
-                  onClick={() => setActiveModal(null)}
+                  onClick={() => setShowProjectModal(false)}
                   className="px-5 py-2.5 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition text-sm font-medium"
                 >
-                  Cancel
+                  Batal
                 </button>
                 <button
                   type="submit"
                   disabled={loading || uploadingFile}
-                  className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#bfa37a] to-[#dfcfb9] text-black font-semibold text-sm hover:opacity-90 transition disabled:opacity-50"
+                  className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#bfa37a] to-[#dfcfb9] text-black font-semibold text-sm hover:opacity-90 transition disabled:opacity-50 flex items-center gap-2"
                 >
-                  {loading ? "Saving..." : "Save Video"}
+                  {loading || uploadingFile ? <><Loader2 className="w-4 h-4 animate-spin" /> Menyimpan...</> : "Simpan Project"}
                 </button>
               </div>
             </form>
@@ -1209,84 +1010,85 @@ const AdminDashboard = () => {
         </div>
       )}
 
-      {/* ==================== CERTIFICATE MODAL ==================== */}
-      {isCertModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md">
-          <div className="relative w-full max-w-md rounded-2xl border border-white/10 bg-[#0a0a0c] p-6 sm:p-8 shadow-2xl">
-            <button 
-              onClick={() => setIsCertModalOpen(false)}
-              className="absolute top-4 right-4 text-gray-400 hover:text-white transition"
-            >
-              <X className="w-5 h-5" />
-            </button>
+      {/* ═══ CERTIFICATE MODAL ═══════════════════════════════════════════════════ */}
+      {showCertModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+          <div className="relative w-full max-w-md rounded-2xl border border-white/10 bg-[#080809] shadow-2xl overflow-y-auto max-h-[90vh]">
+            <div className="sticky top-0 z-10 flex items-center justify-between px-6 py-4 border-b border-white/[0.07] bg-[#080809]/90 backdrop-blur-sm">
+              <div>
+                <h3 className="text-xl font-bold font-serif text-[#dfcfb9]">
+                  {currentCert.id ? "Edit Sertifikat" : "Tambah Sertifikat"}
+                </h3>
+                <p className="text-gray-500 text-xs mt-0.5">Upload gambar sertifikat kamu</p>
+              </div>
+              <button onClick={() => setShowCertModal(false)} className="p-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
 
-            <h3 className="text-2xl font-bold font-serif mb-6 text-[#dfcfb9]">
-              Add New Certificate
-            </h3>
+            <form onSubmit={saveCert} className="p-6 space-y-5">
+              {/* Optional title */}
+              <Field label="Nama / Judul Sertifikat (Opsional)" icon={Award}>
+                <input
+                  type="text"
+                  value={currentCert.Title}
+                  onChange={(e) => setCurrentCert({ ...currentCert, Title: e.target.value })}
+                  placeholder="cth: Sertifikat Web Development - Dicoding"
+                  className={inputCls}
+                />
+              </Field>
 
-            <form onSubmit={saveCert} className="space-y-6">
-              {/* Image Input Selection */}
-              <div className="space-y-4">
-                <label className="text-xs font-semibold text-gray-300 uppercase tracking-wider block">Certificate Image</label>
-
-                {/* Option 1: File Upload */}
-                <div className="space-y-2">
-                  <span className="text-[11px] text-gray-400">Option 1: Upload Image File</span>
-                  <label className="flex flex-col items-center justify-center w-full h-28 border border-dashed border-white/10 hover:border-[#bfa37a]/40 rounded-xl bg-black/20 cursor-pointer hover:bg-black/30 transition-colors">
-                    <div className="flex flex-col items-center justify-center pt-4 pb-4">
-                      {uploadingFile ? (
-                        <Loader2 className="w-6 h-6 animate-spin text-[#bfa37a] mb-2" />
-                      ) : (
-                        <Upload className="w-6 h-6 text-gray-400 mb-2" />
-                      )}
-                      <p className="text-xs text-gray-400">
-                        {uploadFile ? uploadFile.name : "Click to select local file"}
-                      </p>
-                    </div>
-                    <input 
-                      type="file" 
-                      accept="image/*" 
-                      onChange={(e) => setUploadFile(e.target.files[0])} 
-                      className="hidden" 
-                    />
-                  </label>
+              {/* Upload zone */}
+              <div>
+                <p className="text-[10px] text-gray-500 mb-1.5 uppercase tracking-wider font-semibold">Gambar Sertifikat</p>
+                <div className="mb-3">
+                  <p className="text-[10px] text-gray-500 mb-1.5">Opsi 1: Upload dari Perangkat</p>
+                  <UploadZone
+                    uploadFile={certUploadFile}
+                    setUploadFile={setCertUploadFile}
+                    uploadingFile={uploadingFile}
+                    accept="image/*"
+                    label="Sertifikat"
+                  />
                 </div>
-
-                {/* Option 2: Image URL */}
-                <div className="space-y-2">
-                  <span className="text-[11px] text-gray-400">Option 2: Direct Image URL</span>
+                <div>
+                  <p className="text-[10px] text-gray-500 mb-1.5">Opsi 2: URL Gambar Langsung</p>
                   <div className="relative">
-                    <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-500">
-                      <FileImage className="w-4 h-4" />
-                    </span>
+                    <Image className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none" />
                     <input
                       type="text"
                       value={currentCert.Img}
                       onChange={(e) => setCurrentCert({ ...currentCert, Img: e.target.value })}
-                      placeholder="https://images.unsplash.com/... or absolute link"
-                      className="block w-full pl-10 pr-4 py-3 border border-white/10 rounded-xl bg-black/40 text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-[#bfa37a] focus:border-[#bfa37a] text-sm"
-                      disabled={!!uploadFile}
+                      placeholder="https://... atau link langsung ke gambar sertifikat"
+                      className={`${inputCls} pl-10`}
+                      disabled={!!certUploadFile}
                     />
                   </div>
-                  {uploadFile && <p className="text-[10px] text-amber-400 font-light">Local file is selected. Image URL field is locked.</p>}
+                  {certUploadFile && <p className="text-[10px] text-amber-400 mt-1">File dipilih — kolom URL dikunci.</p>}
                 </div>
+
+                {/* Preview existing image */}
+                {currentCert.Img && !certUploadFile && (
+                  <div className="mt-3 rounded-xl overflow-hidden border border-white/10 aspect-[4/3]">
+                    <img src={currentCert.Img} alt="preview" className="w-full h-full object-cover" />
+                  </div>
+                )}
               </div>
 
-              {/* Action Buttons */}
-              <div className="flex justify-end gap-3 border-t border-white/5 pt-6 mt-6">
+              <div className="flex justify-end gap-3 border-t border-white/[0.07] pt-5">
                 <button
                   type="button"
-                  onClick={() => setIsCertModalOpen(false)}
+                  onClick={() => setShowCertModal(false)}
                   className="px-5 py-2.5 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition text-sm font-medium"
                 >
-                  Cancel
+                  Batal
                 </button>
                 <button
                   type="submit"
                   disabled={loading || uploadingFile}
-                  className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#bfa37a] to-[#dfcfb9] text-black font-semibold text-sm hover:opacity-90 transition disabled:opacity-50"
+                  className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#bfa37a] to-[#dfcfb9] text-black font-semibold text-sm hover:opacity-90 transition disabled:opacity-50 flex items-center gap-2"
                 >
-                  {loading ? "Adding..." : "Add"}
+                  {loading || uploadingFile ? <><Loader2 className="w-4 h-4 animate-spin" /> Menyimpan...</> : currentCert.id ? "Perbarui" : "Tambah Sertifikat"}
                 </button>
               </div>
             </form>
