@@ -513,6 +513,69 @@ const AdminDashboard = () => {
       {/* ═══ MAIN CONTENT ════════════════════════════════════════════════════════ */}
       <main className="flex-1 p-5 md:p-8 z-10 overflow-y-auto">
 
+        {/* ─── QUICK UPLOAD PANEL ────────────────────────────────────────────── */}
+        {(activeTab === "projects" || activeTab === "certificates") && (
+          <div className="mb-8 bg-white/[0.02] border border-white/10 rounded-2xl p-5 backdrop-blur-md">
+            <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#bfa37a]" />
+              Opsi Unggah Cepat
+            </h3>
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              {/* Websites */}
+              <button
+                type="button"
+                onClick={() => openProjectModal(null, "website")}
+                className="group flex flex-col items-center justify-center p-5 rounded-xl border border-white/10 bg-black/30 hover:border-blue-500/30 hover:bg-[#bfa37a]/5 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-[#bfa37a]/5"
+              >
+                <div className="w-12 h-12 rounded-full flex items-center justify-center bg-blue-500/10 text-blue-400 mb-3 group-hover:scale-110 transition-transform duration-300">
+                  <Globe className="w-6 h-6 group-hover:animate-pulse" />
+                </div>
+                <span className="text-sm font-semibold text-gray-200 group-hover:text-white">Websites</span>
+                <span className="text-[10px] text-gray-500 mt-1 text-center">Proyek Website</span>
+              </button>
+
+              {/* Design */}
+              <button
+                type="button"
+                onClick={() => openProjectModal(null, "design")}
+                className="group flex flex-col items-center justify-center p-5 rounded-xl border border-white/10 bg-black/30 hover:border-purple-500/30 hover:bg-[#bfa37a]/5 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-[#bfa37a]/5"
+              >
+                <div className="w-12 h-12 rounded-full flex items-center justify-center bg-purple-500/10 text-purple-400 mb-3 group-hover:scale-110 transition-transform duration-300">
+                  <Palette className="w-6 h-6 group-hover:rotate-12 transition-transform" />
+                </div>
+                <span className="text-sm font-semibold text-gray-200 group-hover:text-white">Design</span>
+                <span className="text-[10px] text-gray-500 mt-1 text-center">Desain & Poster</span>
+              </button>
+
+              {/* Video */}
+              <button
+                type="button"
+                onClick={() => openProjectModal(null, "video")}
+                className="group flex flex-col items-center justify-center p-5 rounded-xl border border-white/10 bg-black/30 hover:border-red-500/30 hover:bg-[#bfa37a]/5 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-[#bfa37a]/5"
+              >
+                <div className="w-12 h-12 rounded-full flex items-center justify-center bg-red-500/10 text-red-400 mb-3 group-hover:scale-110 transition-transform duration-300">
+                  <Video className="w-6 h-6 group-hover:scale-110 transition-transform" />
+                </div>
+                <span className="text-sm font-semibold text-gray-200 group-hover:text-white">Video</span>
+                <span className="text-[10px] text-gray-500 mt-1 text-center">Konten Video</span>
+              </button>
+
+              {/* Certificates */}
+              <button
+                type="button"
+                onClick={() => openCertModal()}
+                className="group flex flex-col items-center justify-center p-5 rounded-xl border border-white/10 bg-black/30 hover:border-amber-500/30 hover:bg-[#bfa37a]/5 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-[#bfa37a]/5"
+              >
+                <div className="w-12 h-12 rounded-full flex items-center justify-center bg-amber-500/10 text-amber-400 mb-3 group-hover:scale-110 transition-transform duration-300">
+                  <Award className="w-6 h-6 group-hover:animate-bounce" />
+                </div>
+                <span className="text-sm font-semibold text-gray-200 group-hover:text-white">Certificates</span>
+                <span className="text-[10px] text-gray-500 mt-1 text-center">Sertifikat Prestasi</span>
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* ─── PROJECTS TAB ─────────────────────────────────────────────────── */}
         {activeTab === "projects" && (
           <>
