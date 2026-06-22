@@ -27,6 +27,7 @@ import {
   LayoutGrid,
   Eye,
   Github,
+  Download,
 } from "lucide-react";
 import Swal from "sweetalert2";
 
@@ -123,13 +124,18 @@ const CATEGORIES = [
 
 // ─── Main Admin Dashboard ─────────────────────────────────────────────────────
 const AdminDashboard = () => {
-  const [activeTab, setActiveTab] = useState("projects");
+  const [activeTab, setActiveTab] = useState("website");
   const [projects, setProjects] = useState([]);
   const [certificates, setCertificates] = useState([]);
   const [comments, setComments] = useState([]);
   const [loading, setLoading] = useState(false);
   const [userEmail, setUserEmail] = useState("");
   const navigate = useNavigate();
+
+  // Bulk Upload states
+  const [showBulkCertModal, setShowBulkCertModal] = useState(false);
+  const [bulkFiles, setBulkFiles] = useState([]);
+  const [bulkUploadStatus, setBulkUploadStatus] = useState([]);
 
   // Settings state
   const [experienceSetting, setExperienceSetting] = useState(null);
@@ -215,6 +221,164 @@ const AdminDashboard = () => {
       return null;
     } finally {
       setUploadingFile(false);
+    }
+  };
+
+  // Helper for YouTube ID extraction
+  const getYoutubeId = (url) => {
+    if (!url) return null;
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+    const match = url.match(regExp);
+    return (match && match[2].length === 11) ? match[2] : null;
+  };
+
+  // GitHub Auto-Importer
+  const fetchGithubRepoData = async () => {
+    const url = currentProject.Github;
+    if (!url || url.toLowerCase() === 'private') return;
+    
+    const match = url.match(/github\.com\/([^/]+)\/([^/]+)/);
+    if (!match) {
+      Swal.fire({
+        icon: "warning",
+        title: "URL GitHub Tidak Valid",
+        text: "Gunakan format: https://github.com/username/repository-name",
+        background: "#0a0a0c",
+        color: "#fff",
+        confirmButtonColor: "#bfa37a"
+      });
+      return;
+    }
+    
+    const owner = match[1];
+    let repo = match[2];
+    if (repo.endsWith('.git')) {
+      repo = repo.slice(0, -4);
+    }
+    
+    setLoading(true);
+    try {
+      const response = await fetch(`https://api.github.com/repos/${owner}/${repo}`);
+      if (!response.ok) {
+        throw new Error(response.status === 404 ? "Repository tidak ditemukan atau privat." : "Gagal mengambil data GitHub.");
+      }
+      const data = await response.json();
+      
+      setCurrentProject(prev => {
+        const formattedTitle = data.name
+          ? data.name
+              .split(/[-_]/)
+              .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+              .join(" ")
+          : prev.Title;
+          
+        return {
+          ...prev,
+          Title: formattedTitle,
+          Description: data.description || prev.Description,
+          TechStack: data.topics && data.topics.length > 0 
+            ? data.topics.join(", ") 
+            : prev.TechStack,
+          Link: data.homepage || prev.Link
+        };
+      });
+      
+      Swal.fire({
+        icon: "success",
+        title: "Import Berhasil",
+        text: `Data dari repo "${data.name}" berhasil diimpor!`,
+        timer: 1500,
+        showConfirmButton: false,
+        background: "#0a0a0c",
+        color: "#fff"
+      });
+    } catch (err) {
+      Swal.fire({
+        icon: "error",
+        title: "Gagal Mengambil Data",
+        text: err.message,
+        background: "#0a0a0c",
+        color: "#fff",
+        confirmButtonColor: "#bfa37a"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Bulk Upload Certificates
+  const addBulkFiles = (files) => {
+    const newFiles = files.map(file => {
+      const nameWithoutExt = file.name.substring(0, file.name.lastIndexOf('.')) || file.name;
+      const formattedTitle = nameWithoutExt
+        .split(/[-_ ]+/)
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(" ");
+      return { file, title: formattedTitle };
+    });
+    setBulkFiles(prev => [...prev, ...newFiles]);
+    setBulkUploadStatus(prev => [...prev, ...newFiles.map(() => ({ status: 'idle' }))]);
+  };
+
+  const handleBulkUpload = async () => {
+    if (bulkFiles.length === 0) return;
+    setUploadingFile(true);
+    
+    const currentStatuses = [...bulkUploadStatus];
+    let successCount = 0;
+    
+    for (let i = 0; i < bulkFiles.length; i++) {
+      const fileItem = bulkFiles[i];
+      currentStatuses[i] = { status: 'uploading' };
+      setBulkUploadStatus([...currentStatuses]);
+      
+      try {
+        const file = fileItem.file;
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${Date.now()}_${Math.random().toString(36).substring(2)}.${fileExt}`;
+        const filePath = `admin-uploads/${fileName}`;
+        
+        const { error: upErr } = await supabase.storage.from('profile-images').upload(filePath, file);
+        if (upErr) throw upErr;
+        
+        const { data: { publicUrl } } = supabase.storage.from('profile-images').getPublicUrl(filePath);
+        
+        const payload = { 
+          Img: publicUrl, 
+          ...(fileItem.title ? { Title: fileItem.title } : {}) 
+        };
+        
+        const { error: dbErr } = await supabase.from("certificates").insert([payload]);
+        if (dbErr) throw dbErr;
+        
+        currentStatuses[i] = { status: 'success' };
+        successCount++;
+      } catch (err) {
+        console.error(err);
+        currentStatuses[i] = { status: 'error', errorMsg: err.message || "Gagal upload" };
+      }
+      setBulkUploadStatus([...currentStatuses]);
+    }
+    
+    setUploadingFile(false);
+    
+    Swal.fire({
+      icon: successCount === bulkFiles.length ? "success" : "info",
+      title: "Upload Selesai",
+      text: `${successCount} dari ${bulkFiles.length} sertifikat berhasil diunggah!`,
+      background: "#0a0a0c",
+      color: "#fff",
+      confirmButtonColor: "#bfa37a"
+    });
+    
+    loadAllData();
+    
+    if (successCount === bulkFiles.length) {
+      setTimeout(() => {
+        setShowBulkCertModal(false);
+        setBulkFiles([]);
+        setBulkUploadStatus([]);
+      }, 1000);
     }
   };
 
@@ -416,7 +580,9 @@ const AdminDashboard = () => {
 
   // ─── Sidebar items ────────────────────────────────────────────────────────────
   const sidebarItems = [
-    { key: "projects", label: "Semua Project", icon: LayoutGrid, count: projects.length },
+    { key: "website", label: "Website", icon: Globe, count: projects.filter(p => p.Category?.toLowerCase() === "website").length },
+    { key: "design", label: "Poster & Design", icon: Palette, count: projects.filter(p => p.Category?.toLowerCase() === "design").length },
+    { key: "video", label: "Video & Medsos", icon: Video, count: projects.filter(p => p.Category?.toLowerCase() === "video").length },
     { key: "certificates", label: "Sertifikat", icon: Award, count: certificates.length },
     { key: "comments", label: "Komentar", icon: MessageSquare, count: comments.length },
     { key: "settings", label: "Pengaturan", icon: Settings },
@@ -478,28 +644,6 @@ const AdminDashboard = () => {
               </button>
             ))}
           </nav>
-
-          {/* Category quick links */}
-          <div className="mt-4 pt-4 border-t border-white/5">
-            <p className="text-[10px] text-gray-500 uppercase tracking-wider mb-2 px-1 font-semibold">Kategori Project</p>
-            {CATEGORIES.map(({ key, label, icon: Icon }) => (
-              <button
-                key={key}
-                onClick={() => { setActiveTab("projects"); setFilterCat(key); }}
-                className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs transition-all duration-200 ${
-                  activeTab === "projects" && filterCat === key
-                    ? "text-white bg-white/5"
-                    : "text-gray-500 hover:text-gray-300 hover:bg-white/[0.03]"
-                }`}
-              >
-                <Icon className="w-3.5 h-3.5" />
-                {label}
-                <span className="ml-auto text-[10px] text-gray-600">
-                  {projects.filter(p => p.Category?.toLowerCase() === key).length}
-                </span>
-              </button>
-            ))}
-          </div>
         </div>
 
         <button
@@ -514,7 +658,7 @@ const AdminDashboard = () => {
       <main className="flex-1 p-5 md:p-8 z-10 overflow-y-auto">
 
         {/* ─── QUICK UPLOAD PANEL ────────────────────────────────────────────── */}
-        {(activeTab === "projects" || activeTab === "certificates") && (
+        {(["website", "design", "video", "certificates"].includes(activeTab)) && (
           <div className="mb-8 bg-white/[0.02] border border-white/10 rounded-2xl p-5 backdrop-blur-md">
             <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4 flex items-center gap-2">
               <span className="w-1.5 h-1.5 rounded-full bg-[#bfa37a]" />
@@ -577,44 +721,28 @@ const AdminDashboard = () => {
         )}
 
         {/* ─── PROJECTS TAB ─────────────────────────────────────────────────── */}
-        {activeTab === "projects" && (
+        {["website", "design", "video"].includes(activeTab) && (
           <>
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
               <div>
-                <h2 className="text-2xl font-bold font-serif">Semua Project</h2>
-                <p className="text-gray-400 text-sm mt-0.5">Kelola semua project portfolio kamu di sini.</p>
+                <h2 className="text-2xl font-bold font-serif uppercase tracking-wider">
+                  {activeTab === "website" ? "Website Projects" : activeTab === "design" ? "Desain & Poster" : "Video & Medsos"}
+                </h2>
+                <p className="text-gray-400 text-sm mt-0.5">
+                  {activeTab === "website" ? "Kelola proyek website portfolio Anda di sini." : activeTab === "design" ? "Kelola hasil desain, poster, dan branding Anda." : "Kelola video editan dan link postingan media sosial Anda."}
+                </p>
               </div>
               <button
-                onClick={() => openProjectModal(null, filterCat === "all" ? "website" : filterCat)}
+                onClick={() => openProjectModal(null, activeTab)}
                 className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#bfa37a] to-[#dfcfb9] text-black font-semibold text-sm hover:opacity-90 transition shadow-md shadow-[#bfa37a]/15 flex-shrink-0"
               >
-                <Plus className="w-4 h-4" /> Tambah Project
+                <Plus className="w-4 h-4" /> Tambah {activeTab === "website" ? "Website" : activeTab === "design" ? "Desain" : "Video"}
               </button>
             </div>
 
-            {/* Category filter pills */}
-            <div className="flex flex-wrap gap-2 mb-5">
-              {[{ key: "all", label: "Semua", icon: LayoutGrid }, ...CATEGORIES].map(({ key, label, icon: Icon }) => (
-                <button
-                  key={key}
-                  onClick={() => setFilterCat(key)}
-                  className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-medium transition-all duration-200 border ${
-                    filterCat === key
-                      ? "bg-gradient-to-r from-[#bfa37a] to-[#dfcfb9] text-black border-transparent shadow-md shadow-[#bfa37a]/20"
-                      : "border-white/10 text-gray-400 hover:text-white hover:border-white/20 bg-white/[0.03]"
-                  }`}
-                >
-                  <Icon className="w-3.5 h-3.5" /> {label}
-                  <span className="ml-0.5 opacity-60">
-                    {key === "all" ? projects.length : projects.filter(p => p.Category?.toLowerCase() === key).length}
-                  </span>
-                </button>
-              ))}
-            </div>
-
             {/* Loading */}
-            {loading && projects.length === 0 && (
+            {loading && projects.filter(p => p.Category?.toLowerCase() === activeTab).length === 0 && (
               <div className="flex flex-col items-center justify-center py-24 text-gray-500">
                 <Loader2 className="w-10 h-10 animate-spin text-[#bfa37a] mb-4" />
                 <p>Memuat data...</p>
@@ -624,7 +752,7 @@ const AdminDashboard = () => {
             {/* Project grid */}
             {!loading && (
               <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-                {filteredProjects.map((project) => {
+                {projects.filter(p => p.Category?.toLowerCase() === activeTab).map((project) => {
                   const catConfig = CATEGORIES.find(c => c.key === project.Category?.toLowerCase());
                   const CatIcon = catConfig?.icon || Globe;
                   return (
@@ -684,15 +812,15 @@ const AdminDashboard = () => {
                 })}
 
                 {/* Empty state */}
-                {filteredProjects.length === 0 && (
+                {projects.filter(p => p.Category?.toLowerCase() === activeTab).length === 0 && (
                   <div className="col-span-3 flex flex-col items-center justify-center py-24 text-gray-500 border border-dashed border-white/10 rounded-2xl gap-3">
                     <LayoutGrid className="w-10 h-10 opacity-30" />
-                    <p className="text-sm">Belum ada project {filterCat !== "all" ? `kategori "${filterCat}"` : ""}.</p>
+                    <p className="text-sm">Belum ada project kategori "{activeTab === "website" ? "Website" : activeTab === "design" ? "Desain" : "Video"}".</p>
                     <button
-                      onClick={() => openProjectModal(null, filterCat === "all" ? "website" : filterCat)}
+                      onClick={() => openProjectModal(null, activeTab)}
                       className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#bfa37a]/10 border border-[#bfa37a]/20 text-[#dfcfb9] text-xs font-medium hover:bg-[#bfa37a]/15 transition"
                     >
-                      <Plus className="w-3.5 h-3.5" /> Tambah Project Pertama
+                      <Plus className="w-3.5 h-3.5" /> Tambah Pertama
                     </button>
                   </div>
                 )}
@@ -709,12 +837,20 @@ const AdminDashboard = () => {
                 <h2 className="text-2xl font-bold font-serif">Sertifikat</h2>
                 <p className="text-gray-400 text-sm mt-0.5">Upload dan kelola sertifikat yang ditampilkan di portfolio.</p>
               </div>
-              <button
-                onClick={() => openCertModal()}
-                className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#bfa37a] to-[#dfcfb9] text-black font-semibold text-sm hover:opacity-90 transition shadow-md shadow-[#bfa37a]/15 flex-shrink-0"
-              >
-                <Plus className="w-4 h-4" /> Tambah Sertifikat
-              </button>
+              <div className="flex items-center gap-2 flex-shrink-0">
+                <button
+                  onClick={() => setShowBulkCertModal(true)}
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white font-semibold text-sm hover:bg-white/10 transition shadow-md flex-shrink-0"
+                >
+                  <Upload className="w-4 h-4" /> Upload Sekaligus (Bulk)
+                </button>
+                <button
+                  onClick={() => openCertModal()}
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#bfa37a] to-[#dfcfb9] text-black font-semibold text-sm hover:opacity-90 transition shadow-md shadow-[#bfa37a]/15 flex-shrink-0"
+                >
+                  <Plus className="w-4 h-4" /> Tambah Sertifikat
+                </button>
+              </div>
             </div>
 
             {loading && certificates.length === 0 && (
@@ -958,7 +1094,17 @@ const AdminDashboard = () => {
                 <input
                   type="text"
                   value={currentProject.Link}
-                  onChange={(e) => setCurrentProject({ ...currentProject, Link: e.target.value })}
+                  onChange={(e) => {
+                    const newLink = e.target.value;
+                    let nextImg = currentProject.Img;
+                    if (currentProject.Category === "video") {
+                      const ytId = getYoutubeId(newLink);
+                      if (ytId) {
+                        nextImg = `https://img.youtube.com/vi/${ytId}/hqdefault.jpg`;
+                      }
+                    }
+                    setCurrentProject({ ...currentProject, Link: newLink, Img: nextImg });
+                  }}
                   placeholder={
                     currentProject.Category === "video" ? "https://youtube.com/watch?v=..." :
                     currentProject.Category === "design" ? "https://behance.net/... (opsional)" :
@@ -971,14 +1117,24 @@ const AdminDashboard = () => {
 
               {/* GitHub — only for website */}
               {currentProject.Category === "website" && (
-                <Field label="Link GitHub Repository" icon={FolderGit2} hint="Opsional — tulis 'Private' jika repo privat">
-                  <input
-                    type="text"
-                    value={currentProject.Github}
-                    onChange={(e) => setCurrentProject({ ...currentProject, Github: e.target.value })}
-                    placeholder="https://github.com/... atau 'Private'"
-                    className={inputCls}
-                  />
+                <Field label="Link GitHub Repository" icon={FolderGit2} hint="Opsional — klik 'Import' untuk mengisi judul, deskripsi, dan tech stack otomatis dari repository publik Anda">
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={currentProject.Github}
+                      onChange={(e) => setCurrentProject({ ...currentProject, Github: e.target.value })}
+                      placeholder="https://github.com/username/repo-name"
+                      className={`${inputCls} flex-1`}
+                    />
+                    <button
+                      type="button"
+                      onClick={fetchGithubRepoData}
+                      disabled={loading || !currentProject.Github || currentProject.Github.toLowerCase() === 'private'}
+                      className="px-4 py-2 bg-[#bfa37a]/20 hover:bg-[#bfa37a]/30 text-[#dfcfb9] border border-[#bfa37a]/30 hover:border-[#bfa37a]/50 rounded-xl transition text-xs font-semibold flex items-center gap-1.5 disabled:opacity-50 flex-shrink-0"
+                    >
+                      <Download className="w-3.5 h-3.5" /> Import
+                    </button>
+                  </div>
                 </Field>
               )}
 
@@ -1155,6 +1311,139 @@ const AdminDashboard = () => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* ═══ BULK CERTIFICATE MODAL ═════════════════════════════════════════════ */}
+      {showBulkCertModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+          <div className="relative w-full max-w-lg rounded-2xl border border-white/10 bg-[#080809] shadow-2xl overflow-y-auto max-h-[90vh]">
+            <div className="sticky top-0 z-10 flex items-center justify-between px-6 py-4 border-b border-white/[0.07] bg-[#080809]/90 backdrop-blur-sm">
+              <div>
+                <h3 className="text-xl font-bold font-serif text-[#dfcfb9]">Upload Sekaligus (Bulk)</h3>
+                <p className="text-gray-500 text-xs mt-0.5">Unggah beberapa gambar sertifikat sekaligus</p>
+              </div>
+              <button 
+                onClick={() => {
+                  if (uploadingFile) return;
+                  setShowBulkCertModal(false);
+                  setBulkFiles([]);
+                  setBulkUploadStatus([]);
+                }} 
+                className="p-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-5">
+              {/* Drag & Drop Area */}
+              <div
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
+                  addBulkFiles(files);
+                }}
+                className="border-2 border-dashed border-white/10 hover:border-[#bfa37a]/40 bg-black/20 hover:bg-black/30 rounded-2xl p-8 text-center cursor-pointer transition-all duration-300"
+                onClick={() => document.getElementById('bulk-cert-input').click()}
+              >
+                <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                <p className="text-sm text-gray-300 font-medium">Pilih beberapa file atau seret ke sini</p>
+                <p className="text-xs text-gray-500 mt-1">Hanya file gambar (JPG, PNG, WEBP)</p>
+                <input
+                  id="bulk-cert-input"
+                  type="file"
+                  multiple
+                  accept="image/*"
+                  onChange={(e) => addBulkFiles(Array.from(e.target.files))}
+                  className="hidden"
+                />
+              </div>
+
+              {/* Files list */}
+              {bulkFiles.length > 0 && (
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center text-xs text-gray-400 uppercase tracking-wider font-semibold">
+                    <span>Daftar File ({bulkFiles.length})</span>
+                    <button 
+                      type="button" 
+                      onClick={() => { setBulkFiles([]); setBulkUploadStatus([]); }}
+                      className="text-red-400 hover:text-red-300 hover:underline text-[10px]"
+                      disabled={uploadingFile}
+                    >
+                      Hapus Semua
+                    </button>
+                  </div>
+                  
+                  <div className="max-h-[30vh] overflow-y-auto space-y-2 pr-1 custom-scrollbar">
+                    {bulkFiles.map((fileObj, idx) => {
+                      const status = bulkUploadStatus[idx];
+                      return (
+                        <div key={idx} className="flex items-center justify-between p-3 rounded-xl bg-white/[0.02] border border-white/5 gap-3">
+                          <div className="flex-1 min-w-0">
+                            <input
+                              type="text"
+                              value={fileObj.title}
+                              disabled={uploadingFile}
+                              onChange={(e) => {
+                                const newTitle = e.target.value;
+                                setBulkFiles(prev => prev.map((f, i) => i === idx ? { ...f, title: newTitle } : f));
+                              }}
+                              className="w-full bg-transparent text-sm text-white focus:outline-none focus:border-[#bfa37a] border-b border-transparent placeholder-gray-500 font-medium truncate"
+                            />
+                            <p className="text-[10px] text-gray-500 mt-0.5 font-mono truncate">{fileObj.file.name}</p>
+                          </div>
+                          
+                          <div className="flex-shrink-0 flex items-center gap-2">
+                            {status?.status === 'uploading' && <Loader2 className="w-4 h-4 animate-spin text-[#bfa37a]" />}
+                            {status?.status === 'success' && <CheckCircle2 className="w-4 h-4 text-emerald-400" />}
+                            {status?.status === 'error' && <AlertCircle className="w-4 h-4 text-red-400" title={status.errorMsg} />}
+                            {status?.status === 'idle' && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setBulkFiles(prev => prev.filter((_, i) => i !== idx));
+                                  setBulkUploadStatus(prev => prev.filter((_, i) => i !== idx));
+                                }}
+                                className="p-1 rounded hover:bg-white/5 text-gray-500 hover:text-gray-300"
+                              >
+                                <X className="w-3.5 h-3.5" />
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Actions */}
+              <div className="flex justify-end gap-3 border-t border-white/[0.07] pt-5">
+                <button
+                  type="button"
+                  disabled={uploadingFile}
+                  onClick={() => {
+                    setShowBulkCertModal(false);
+                    setBulkFiles([]);
+                    setBulkUploadStatus([]);
+                  }}
+                  className="px-5 py-2.5 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition text-sm font-medium disabled:opacity-50"
+                >
+                  Batal
+                </button>
+                <button
+                  type="button"
+                  disabled={uploadingFile || bulkFiles.length === 0}
+                  onClick={handleBulkUpload}
+                  className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#bfa37a] to-[#dfcfb9] text-black font-semibold text-sm hover:opacity-90 transition disabled:opacity-50 flex items-center gap-2"
+                >
+                  {uploadingFile ? <><Loader2 className="w-4 h-4 animate-spin" /> Mengunggah...</> : `Mulai Upload (${bulkFiles.length})`}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

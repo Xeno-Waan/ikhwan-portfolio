@@ -3,6 +3,18 @@ import { Link } from 'react-router-dom';
 import { ExternalLink, ArrowRight, Eye, X } from 'lucide-react';
 import { Modal, IconButton, Box, Backdrop, Typography } from '@mui/material';
 
+const getPlatformBadge = (url) => {
+  if (!url) return null;
+  const lowerUrl = url.toLowerCase();
+  if (lowerUrl.includes("instagram.com")) return { name: "Instagram", bg: "bg-pink-500/20 text-pink-400 border-pink-500/30" };
+  if (lowerUrl.includes("tiktok.com")) return { name: "TikTok", bg: "bg-purple-500/20 text-purple-400 border-purple-500/30" };
+  if (lowerUrl.includes("youtube.com") || lowerUrl.includes("youtu.be")) return { name: "YouTube", bg: "bg-red-500/20 text-red-400 border-red-500/30" };
+  if (lowerUrl.includes("github.com")) return { name: "GitHub", bg: "bg-slate-500/20 text-slate-300 border-slate-500/30" };
+  if (lowerUrl.includes("behance.net")) return { name: "Behance", bg: "bg-blue-500/20 text-blue-400 border-blue-500/30" };
+  if (lowerUrl.includes("dribbble.com")) return { name: "Dribbble", bg: "bg-rose-500/20 text-rose-400 border-rose-500/30" };
+  return null;
+};
+
 const CardProject = ({ Img, Title, Description, Link: ProjectLink, id, Category }) => {
   const [open, setOpen] = useState(false);
   const isDesign = Category?.toLowerCase() === 'design';
@@ -33,6 +45,8 @@ const CardProject = ({ Img, Title, Description, Link: ProjectLink, id, Category 
     }
   };
 
+  const platform = getPlatformBadge(ProjectLink);
+
   return (
     <>
       <div 
@@ -56,6 +70,13 @@ const CardProject = ({ Img, Title, Description, Link: ProjectLink, id, Category 
                   </div>
                 </div>
               )}
+              {platform && (
+                <div className="absolute top-2 left-2 z-20">
+                  <span className={`inline-flex items-center text-[9px] uppercase font-bold tracking-wider px-2.5 py-1 rounded-full border backdrop-blur-md ${platform.bg}`}>
+                    {platform.name}
+                  </span>
+                </div>
+              )}
             </div>
             
             {!isDesign && (
@@ -77,7 +98,9 @@ const CardProject = ({ Img, Title, Description, Link: ProjectLink, id, Category 
                       onClick={handleLiveDemo}
                       className="inline-flex items-center space-x-2 text-[#bfa37a] hover:text-[#dfcfb9] transition-colors duration-200"
                     >
-                      <span className="text-sm font-medium">Live Demo</span>
+                      <span className="text-sm font-medium">
+                        {platform ? `View on ${platform.name}` : 'Live Demo'}
+                      </span>
                       <ExternalLink className="w-4 h-4" />
                     </a>
                   ) : (
@@ -169,6 +192,17 @@ const CardProject = ({ Img, Title, Description, Link: ProjectLink, id, Category 
             >
               {Title}
             </Typography>
+            {ProjectLink && (
+              <a 
+                href={ProjectLink} 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="mt-4 inline-flex items-center space-x-2 px-5 py-2.5 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 text-[#dfcfb9] hover:text-white text-sm font-semibold transition"
+              >
+                <span>Lihat Project Lengkap ({platform?.name || "External Link"})</span>
+                <ExternalLink className="w-4 h-4" />
+              </a>
+            )}
           </Box>
         </Modal>
       )}
