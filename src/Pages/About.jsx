@@ -267,14 +267,6 @@ const AboutPage = () => {
       description: "Validated skills",
       animation: "fade-up",
     },
-    {
-      icon: UserCheck,
-      color: "from-[#dfcfb9] to-[#bfa37a]",
-      value: stats.experience,
-      label: "Years of Experience",
-      description: "Continuous learning",
-      animation: "fade-left",
-    },
   ], [stats]);
 
   return (
@@ -350,7 +342,7 @@ const AboutPage = () => {
         </div>
 
         <Link to="/projects">
-          <div className="grid grid-cols-3 md:grid-cols-6 gap-3 mt-6 cursor-pointer">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 mt-6 cursor-pointer">
             {statsData.map((stat) => (
               <StatCard key={stat.label} {...stat} />
             ))}

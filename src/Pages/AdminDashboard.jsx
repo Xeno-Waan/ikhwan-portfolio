@@ -326,6 +326,8 @@ const AdminDashboard = () => {
     
     const currentStatuses = [...bulkUploadStatus];
     let successCount = 0;
+    const isDesign = activeTab === "design";
+    const targetTable = isDesign ? "projects" : "certificates";
     
     for (let i = 0; i < bulkFiles.length; i++) {
       const fileItem = bulkFiles[i];
@@ -343,12 +345,21 @@ const AdminDashboard = () => {
         
         const { data: { publicUrl } } = supabase.storage.from('profile-images').getPublicUrl(filePath);
         
-        const payload = { 
+        const payload = isDesign ? {
+          Title: fileItem.title || "Design Project",
+          Description: "",
+          Img: publicUrl,
+          Category: "design",
+          Link: "",
+          Github: "Private",
+          Features: [],
+          TechStack: []
+        } : { 
           Img: publicUrl, 
           ...(fileItem.title ? { Title: fileItem.title } : {}) 
         };
         
-        const { error: dbErr } = await supabase.from("certificates").insert([payload]);
+        const { error: dbErr } = await supabase.from(targetTable).insert([payload]);
         if (dbErr) throw dbErr;
         
         currentStatuses[i] = { status: 'success' };
@@ -365,7 +376,7 @@ const AdminDashboard = () => {
     Swal.fire({
       icon: successCount === bulkFiles.length ? "success" : "info",
       title: "Upload Selesai",
-      text: `${successCount} dari ${bulkFiles.length} sertifikat berhasil diunggah!`,
+      text: `${successCount} dari ${bulkFiles.length} item berhasil diunggah!`,
       background: "#0a0a0c",
       color: "#fff",
       confirmButtonColor: "#bfa37a"
@@ -411,16 +422,16 @@ const AdminDashboard = () => {
       if (!imageUrl) throw new Error("Thumbnail/gambar wajib diisi.");
 
       const payload = {
-        Title: currentProject.Title,
-        Description: currentProject.Description,
-        Link: currentProject.Link,
+        Title: currentProject.Title || (currentProject.Category === "design" ? "Design Project" : ""),
+        Description: currentProject.Description || "",
+        Link: currentProject.Link || "",
         Img: imageUrl,
         Category: currentProject.Category || "website",
         Github: currentProject.Github || "Private",
         Features: typeof currentProject.Features === "string"
-          ? currentProject.Features.split("\n").map(f => f.trim()).filter(Boolean) : [],
+          ? currentProject.Features.split("\n").map(f => f.trim()).filter(Boolean) : (Array.isArray(currentProject.Features) ? currentProject.Features : []),
         TechStack: typeof currentProject.TechStack === "string"
-          ? currentProject.TechStack.split(",").map(t => t.trim()).filter(Boolean) : []
+          ? currentProject.TechStack.split(",").map(t => t.trim()).filter(Boolean) : (Array.isArray(currentProject.TechStack) ? currentProject.TechStack : [])
       };
 
       if (currentProject.id) {
@@ -733,12 +744,22 @@ const AdminDashboard = () => {
                   {activeTab === "website" ? "Kelola proyek website portfolio Anda di sini." : activeTab === "design" ? "Kelola hasil desain, poster, dan branding Anda." : "Kelola video editan dan link postingan media sosial Anda."}
                 </p>
               </div>
-              <button
-                onClick={() => openProjectModal(null, activeTab)}
-                className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#bfa37a] to-[#dfcfb9] text-black font-semibold text-sm hover:opacity-90 transition shadow-md shadow-[#bfa37a]/15 flex-shrink-0"
-              >
-                <Plus className="w-4 h-4" /> Tambah {activeTab === "website" ? "Website" : activeTab === "design" ? "Desain" : "Video"}
-              </button>
+              <div className="flex items-center gap-2 flex-shrink-0">
+                {activeTab === "design" && (
+                  <button
+                    onClick={() => setShowBulkCertModal(true)}
+                    className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white font-semibold text-sm hover:bg-white/10 transition shadow-md flex-shrink-0"
+                  >
+                    <Upload className="w-4 h-4" /> Upload Sekaligus (Bulk)
+                  </button>
+                )}
+                <button
+                  onClick={() => openProjectModal(null, activeTab)}
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#bfa37a] to-[#dfcfb9] text-black font-semibold text-sm hover:opacity-90 transition shadow-md shadow-[#bfa37a]/15 flex-shrink-0"
+                >
+                  <Plus className="w-4 h-4" /> Tambah {activeTab === "website" ? "Website" : activeTab === "design" ? "Desain" : "Video"}
+                </button>
+              </div>
             </div>
 
             {/* Loading */}
@@ -1058,7 +1079,7 @@ const AdminDashboard = () => {
               </Field>
 
               {/* Title */}
-              <Field label="Judul Project" icon={FileImage}>
+              <Field label={currentProject.Category === "design" ? "Judul Project (Opsional)" : "Judul Project"} icon={FileImage}>
                 <input
                   type="text"
                   value={currentProject.Title}
@@ -1069,19 +1090,19 @@ const AdminDashboard = () => {
                     "cth: Cinematic Travel Reel 2025"
                   }
                   className={inputCls}
-                  required
+                  required={currentProject.Category !== "design"}
                 />
               </Field>
 
               {/* Description */}
-              <Field label="Deskripsi" icon={MessageSquare}>
+              <Field label={currentProject.Category === "design" ? "Deskripsi (Opsional)" : "Deskripsi"} icon={MessageSquare}>
                 <textarea
                   value={currentProject.Description}
                   onChange={(e) => setCurrentProject({ ...currentProject, Description: e.target.value })}
                   placeholder="Jelaskan project ini, tujuan, fitur utama, dan teknologi yang digunakan..."
                   rows={3}
                   className={textareaCls}
-                  required
+                  required={currentProject.Category !== "design"}
                 />
               </Field>
 
@@ -1321,8 +1342,12 @@ const AdminDashboard = () => {
           <div className="relative w-full max-w-lg rounded-2xl border border-white/10 bg-[#080809] shadow-2xl overflow-y-auto max-h-[90vh]">
             <div className="sticky top-0 z-10 flex items-center justify-between px-6 py-4 border-b border-white/[0.07] bg-[#080809]/90 backdrop-blur-sm">
               <div>
-                <h3 className="text-xl font-bold font-serif text-[#dfcfb9]">Upload Sekaligus (Bulk)</h3>
-                <p className="text-gray-500 text-xs mt-0.5">Unggah beberapa gambar sertifikat sekaligus</p>
+                <h3 className="text-xl font-bold font-serif text-[#dfcfb9]">
+                  {activeTab === "design" ? "Upload Sekaligus Desain (Bulk)" : "Upload Sekaligus Sertifikat (Bulk)"}
+                </h3>
+                <p className="text-gray-500 text-xs mt-0.5">
+                  {activeTab === "design" ? "Unggah beberapa file gambar desain sekaligus" : "Unggah beberapa gambar sertifikat sekaligus"}
+                </p>
               </div>
               <button 
                 onClick={() => {
