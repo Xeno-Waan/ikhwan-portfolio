@@ -148,7 +148,7 @@ const AdminDashboard = () => {
     id: null, Title: "", Description: "", Link: "", Img: "",
     Category: "website", Github: "", Features: "", TechStack: ""
   });
-  const [currentCert, setCurrentCert] = useState({ id: null, Img: "", Title: "" });
+  const [currentCert, setCurrentCert] = useState({ id: null, Img: "" });
 
   // Upload state (shared but reset per modal open)
   const [uploadFile, setUploadFile] = useState(null);
@@ -478,7 +478,7 @@ const AdminDashboard = () => {
 
   // ─── CERTIFICATES CRUD ──────────────────────────────────────────────────────
   const openCertModal = (cert = null) => {
-    setCurrentCert(cert ? { id: cert.id, Img: cert.Img || "", Title: cert.Title || "" } : { id: null, Img: "", Title: "" });
+    setCurrentCert(cert ? { id: cert.id, Img: cert.Img || "" } : { id: null, Img: "" });
     setCertUploadFile(null);
     setShowCertModal(true);
   };
@@ -494,7 +494,7 @@ const AdminDashboard = () => {
       }
       if (!imageUrl) throw new Error("Gambar sertifikat wajib diisi.");
 
-      const payload = { Img: imageUrl, ...(currentCert.Title ? { Title: currentCert.Title } : {}) };
+      const payload = { Img: imageUrl };
 
       if (currentCert.id) {
         const { error } = await supabase.from("certificates").update(payload).eq("id", currentCert.id);

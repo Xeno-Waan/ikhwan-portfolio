@@ -30,7 +30,7 @@ const MainTitle = memo(() => (
       <span className="relative inline-block mt-1">
         <span className="absolute -inset-2 bg-gradient-to-r from-[#bfa37a] to-[#dfcfb9] blur-2xl opacity-10"></span>
         <span className="relative bg-gradient-to-r from-[#bfa37a] to-[#dfcfb9] bg-clip-text text-transparent">
-          Web Developer
+          Web Dev & Creative
         </span>
       </span>
     </h1>
@@ -75,8 +75,8 @@ const SocialLink = memo(({ icon: Icon, link }) => (
 const TYPING_SPEED = 100;
 const ERASING_SPEED = 50;
 const PAUSE_DURATION = 2000;
-const WORDS = ["Informatics Student @ STIKOM El Rahma", "Software Developer", "Community Builder"];
-const TECH_STACK = ["React & JavaScript", "Tailwind & HTML/CSS", "PHP & SQL"];
+const WORDS = ["Informatics Student @ STIKOM El Rahma", "Web Developer", "UI/UX Designer", "Video Editor"];
+const TECH_STACK = ["React & JavaScript", "HTML/CSS & PHP", "Figma & Adobe", "Premiere & After Effects"];
 const SOCIAL_LINKS = [
   { icon: Github, link: "https://github.com/Xeno-Waan" },
   { icon: Linkedin, link: "https://www.linkedin.com/in/muhammad-ikhwan-manshur-3ba78a352?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=android_app" },
@@ -145,7 +145,7 @@ const Home = () => {
 
                 {/* Description */}
                 <p className="text-sm md:text-base text-gray-400 max-w-xl leading-relaxed font-light">
-                  Menciptakan aplikasi web yang inovatif, fungsional, dan bernilai tinggi dengan fokus pada performa serta kebersihan kode.
+                  Mahasiswa Informatika yang passionate dalam membangun sistem website, menciptakan desain visual yang menarik, serta menghasilkan konten video yang impactful.
                 </p>
 
                 {/* Tech Stack */}
@@ -199,7 +199,7 @@ const Home = () => {
                   {/* Bottom overlay badge */}
                   <div className="absolute bottom-4 left-4 right-4 p-3 rounded-xl bg-black/70 backdrop-blur-md border border-white/10 transition-all duration-500 transform translate-y-2 group-hover:translate-y-0 opacity-0 group-hover:opacity-100">
                     <p className="text-white font-serif font-semibold text-sm sm:text-base">M. Ikhwan Manshur</p>
-                    <p className="text-xs text-gray-400 font-light">Informatics & Web Engineering</p>
+                    <p className="text-xs text-gray-400 font-light">Web Dev · Design · Video Editing</p>
                   </div>
                 </div>
               </div>
