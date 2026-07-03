@@ -143,29 +143,32 @@ export default function FullWidthTabs() {
 
       // Filter out setting records
       const projectData = (data || []).filter(p => p.Category !== "setting");
-      
-      const hasCategories = projectData.some(p => p.Category);
-      const isPlaceholderOnly = projectData.length === 0 || 
-        (projectData.length === 1 && projectData[0].Title === "Proyek Pertama Saya") ||
-        !hasCategories;
 
-      const finalProjectData = isPlaceholderOnly ? defaultProjects : projectData;
-      
+      // Pakai data Supabase jika ada, fallback ke default jika kosong
+      const finalProjectData = projectData.length > 0 ? projectData : defaultProjects;
+
       setProjects(finalProjectData);
+      // Selalu update cache agar perubahan admin langsung tampil
       localStorage.setItem("projects", JSON.stringify(finalProjectData));
     } catch (error) {
       console.error("Error fetching data from Supabase:", error.message);
-      setProjects(defaultProjects);
+      // Jika error, coba pakai cache
+      const cachedProjects = localStorage.getItem('projects');
+      if (cachedProjects) {
+        setProjects(JSON.parse(cachedProjects));
+      } else {
+        setProjects(defaultProjects);
+      }
     }
   }, []);
 
   useEffect(() => {
+    // Tampilkan cache dulu (agar tidak blank saat loading)
     const cachedProjects = localStorage.getItem('projects');
     if (cachedProjects) {
       setProjects(JSON.parse(cachedProjects));
-    } else {
-      setProjects(defaultProjects);
     }
+    // Selalu fetch ulang dari Supabase agar data terbaru tampil
     fetchData();
   }, [fetchData]);
 
