@@ -358,8 +358,8 @@ const AdminDashboard = () => {
           Features: [],
           TechStack: []
         } : { 
-          Img: publicUrl, 
-          ...(fileItem.title ? { Title: fileItem.title } : {}) 
+          // Tabel certificates hanya punya kolom Img
+          Img: publicUrl
         };
         
         const { error: dbErr } = await supabase.from(targetTable).insert([payload]);
