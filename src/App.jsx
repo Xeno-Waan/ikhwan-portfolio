@@ -7,7 +7,6 @@ import AnimatedBackground from "./components/Background";
 import Navbar from "./components/Navbar";
 import Portofolio from "./Pages/Portofolio";
 import Certificates from "./Pages/Certificates";
-import TechStack from "./Pages/TechStack";
 import ContactPage from "./Pages/Contact";
 import CommentsPage from "./Pages/Comments";
 import ProjectDetails from "./components/ProjectDetail";
@@ -19,7 +18,7 @@ import AOS from 'aos';
 import 'aos/dist/aos.css';
 
 // Pages that fit in one screen (no scroll) — shown inside a card frame
-const FULL_PAGE_ROUTES = ["/", "/about", "/tech-stack", "/contact"];
+const FULL_PAGE_ROUTES = ["/", "/about", "/contact"];
 
 // Animated page wrapper with fade transition
 const PageTransition = ({ children }) => {
@@ -120,7 +119,6 @@ function App() {
         {/* Full-page (landscape, no scroll, card frame) */}
         <Route path="/" element={<PageLayout fullPage><Home /></PageLayout>} />
         <Route path="/about" element={<PageLayout fullPage><About /></PageLayout>} />
-        <Route path="/tech-stack" element={<PageLayout fullPage><TechStack /></PageLayout>} />
         <Route path="/contact" element={<PageLayout fullPage><ContactPage /></PageLayout>} />
 
         {/* Scrollable pages */}
