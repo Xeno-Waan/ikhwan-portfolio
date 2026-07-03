@@ -336,12 +336,15 @@ const AdminDashboard = () => {
       
       try {
         const file = fileItem.file;
-        const fileExt = file.name.split('.').pop();
-        const fileName = `${Date.now()}_${Math.random().toString(36).substring(2)}.${fileExt}`;
+        const fileExt = file.name.split('.').pop().toLowerCase();
+        // Gunakan crypto.randomUUID agar nama file selalu unik
+        const fileName = `${crypto.randomUUID()}.${fileExt}`;
         const filePath = `admin-uploads/${fileName}`;
         
-        const { error: upErr } = await supabase.storage.from('profile-images').upload(filePath, file);
-        if (upErr) throw upErr;
+        const { error: upErr } = await supabase.storage
+          .from('profile-images')
+          .upload(filePath, file, { cacheControl: '3600', upsert: false });
+        if (upErr) throw new Error(`Storage: ${upErr.message}`);
         
         const { data: { publicUrl } } = supabase.storage.from('profile-images').getPublicUrl(filePath);
         
@@ -360,12 +363,12 @@ const AdminDashboard = () => {
         };
         
         const { error: dbErr } = await supabase.from(targetTable).insert([payload]);
-        if (dbErr) throw dbErr;
+        if (dbErr) throw new Error(`Database: ${dbErr.message}`);
         
         currentStatuses[i] = { status: 'success' };
         successCount++;
       } catch (err) {
-        console.error(err);
+        console.error(`[Bulk Upload] File ${fileItem.file.name}:`, err);
         currentStatuses[i] = { status: 'error', errorMsg: err.message || "Gagal upload" };
       }
       setBulkUploadStatus([...currentStatuses]);
@@ -1421,10 +1424,17 @@ const AdminDashboard = () => {
                             <p className="text-[10px] text-gray-500 mt-0.5 font-mono truncate">{fileObj.file.name}</p>
                           </div>
                           
-                          <div className="flex-shrink-0 flex items-center gap-2">
+                          <div className="flex-shrink-0 flex flex-col items-end gap-1">
                             {status?.status === 'uploading' && <Loader2 className="w-4 h-4 animate-spin text-[#bfa37a]" />}
                             {status?.status === 'success' && <CheckCircle2 className="w-4 h-4 text-emerald-400" />}
-                            {status?.status === 'error' && <AlertCircle className="w-4 h-4 text-red-400" title={status.errorMsg} />}
+                            {status?.status === 'error' && (
+                              <div className="flex flex-col items-end gap-0.5">
+                                <AlertCircle className="w-4 h-4 text-red-400" />
+                                {status.errorMsg && (
+                                  <p className="text-[9px] text-red-400 max-w-[120px] text-right leading-tight">{status.errorMsg}</p>
+                                )}
+                              </div>
+                            )}
                             {status?.status === 'idle' && (
                               <button
                                 type="button"
