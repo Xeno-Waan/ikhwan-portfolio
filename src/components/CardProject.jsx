@@ -15,12 +15,24 @@ const getPlatformBadge = (url) => {
   return null;
 };
 
-const renderVideoPlayer = (url, title) => {
+const renderVideoPlayer = (videoFile, url, title) => {
+  // 1. Prioritize direct video file (MP4/WebM) — plays fully in-browser, no redirect
+  if (videoFile) {
+    return (
+      <video
+        src={videoFile}
+        controls
+        autoPlay
+        className="w-full h-full object-contain bg-black"
+      />
+    );
+  }
+
   if (!url) return <div className="text-white text-center p-4">Video tidak tersedia</div>;
 
   const lowerUrl = url.toLowerCase();
 
-  // YouTube
+  // 2. YouTube embed
   const ytRegExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=|shorts\/)([^#\&\?]*).*/;
   const ytMatch = url.match(ytRegExp);
   const ytId = (ytMatch && ytMatch[2].length === 11) ? ytMatch[2] : null;
@@ -37,35 +49,7 @@ const renderVideoPlayer = (url, title) => {
     );
   }
 
-  // Instagram
-  const igMatch = url.match(/instagram\.com\/(p|reel|tv)\/([a-zA-Z0-9-_]+)/);
-  if (igMatch) {
-    return (
-      <iframe
-        src={`https://www.instagram.com/p/${igMatch[2]}/embed/`}
-        title={title}
-        frameBorder="0"
-        allowFullScreen
-        className="w-full h-full"
-      ></iframe>
-    );
-  }
-
-  // TikTok
-  const ttMatch = url.match(/tiktok\.com\/@?[a-zA-Z0-9._-]+\/video\/(\d+)/) || url.match(/tiktok\.com\/embed\/v2\/(\d+)/);
-  if (ttMatch) {
-    return (
-      <iframe
-        src={`https://www.tiktok.com/embed/v2/${ttMatch[1]}`}
-        title={title}
-        frameBorder="0"
-        allowFullScreen
-        className="w-full h-full"
-      ></iframe>
-    );
-  }
-
-  // Vimeo
+  // 3. Vimeo
   const vimeoMatch = url.match(/vimeo\.com\/(\d+)/);
   if (vimeoMatch) {
     return (
@@ -80,7 +64,7 @@ const renderVideoPlayer = (url, title) => {
     );
   }
 
-  // Direct video file (mp4, webm, ogg, etc.)
+  // 4. Direct video file URL in Link field
   if (lowerUrl.endsWith('.mp4') || lowerUrl.endsWith('.webm') || lowerUrl.endsWith('.ogg') || lowerUrl.includes('.mp4?') || lowerUrl.includes('.webm?')) {
     return (
       <video
@@ -92,17 +76,23 @@ const renderVideoPlayer = (url, title) => {
     );
   }
 
-  // Fallback to simple iframe or link
+  // 5. Fallback: Instagram/TikTok dan platform lain yang tidak bisa diputar
   return (
-    <div className="w-full h-full flex flex-col items-center justify-center p-6 bg-slate-900/80 text-center">
-      <p className="text-gray-300 text-sm mb-4">Video format/platform not directly embeddable, would you like to open it in a new window?</p>
+    <div className="w-full h-full flex flex-col items-center justify-center gap-4 bg-slate-900/80 text-center p-6">
+      <div className="w-16 h-16 rounded-full bg-white/5 border border-white/10 flex items-center justify-center">
+        <Play className="w-7 h-7 text-[#dfcfb9] fill-[#dfcfb9] ml-1" />
+      </div>
+      <div>
+        <p className="text-white font-medium text-sm">{title}</p>
+        <p className="text-gray-400 text-xs mt-1">Video ini hanya tersedia di platform aslinya</p>
+      </div>
       <a
         href={url}
         target="_blank"
         rel="noopener noreferrer"
         className="px-6 py-2.5 bg-gradient-to-r from-[#bfa37a] to-[#dfcfb9] text-slate-950 font-semibold rounded-xl hover:opacity-90 transition-opacity text-sm"
       >
-        Open Video Link
+        Tonton di {url.includes('instagram') ? 'Instagram' : url.includes('tiktok') ? 'TikTok' : 'Platform Asli'}
       </a>
     </div>
   );
@@ -475,8 +465,8 @@ const CardProject = ({ Img, Title, Description, Link: ProjectLink, VideoFile, id
             >
               <X className="w-6 h-6" />
             </IconButton>
-            <div className={`w-full ${isVertical ? 'aspect-[9/16] max-h-[75vh]' : 'aspect-video'} rounded-xl overflow-hidden border border-white/10 shadow-2xl bg-black`}>
-              {renderVideoPlayer(ProjectLink, Title)}
+            <div className={`w-full ${VideoFile ? 'aspect-video' : isVertical ? 'aspect-[9/16] max-h-[75vh]' : 'aspect-video'} rounded-xl overflow-hidden border border-white/10 shadow-2xl bg-black`}>
+              {renderVideoPlayer(VideoFile, ProjectLink, Title)}
             </div>
             <Typography 
               variant="h6" 
@@ -491,7 +481,8 @@ const CardProject = ({ Img, Title, Description, Link: ProjectLink, VideoFile, id
             >
               {Title}
             </Typography>
-            {ProjectLink && (
+            {/* Hanya tampilkan link referensi jika tidak ada VideoFile langsung */}
+            {ProjectLink && !VideoFile && (
               <a 
                 href={ProjectLink} 
                 target="_blank" 
@@ -500,6 +491,18 @@ const CardProject = ({ Img, Title, Description, Link: ProjectLink, VideoFile, id
               >
                 <span>Tonton di {platform?.name || "External Link"}</span>
                 <ExternalLink className="w-4 h-4" />
+              </a>
+            )}
+            {/* Jika ada VideoFile, tampilkan link asli sebagai referensi kecil */}
+            {ProjectLink && VideoFile && (
+              <a 
+                href={ProjectLink} 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="mt-3 inline-flex items-center gap-1.5 text-gray-500 hover:text-gray-300 text-xs transition"
+              >
+                <ExternalLink className="w-3 h-3" />
+                <span>Lihat di {platform?.name || "platform asli"}</span>
               </a>
             )}
           </Box>

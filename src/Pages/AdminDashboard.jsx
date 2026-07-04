@@ -420,14 +420,7 @@ const AdminDashboard = () => {
     e.preventDefault();
     setLoading(true);
     try {
-      let imageUrl = currentProject.Img;
-      if (uploadFile) {
-        const url = await uploadToStorage(uploadFile);
-        if (url) imageUrl = url;
-      }
-      if (!imageUrl) throw new Error("Thumbnail/gambar wajib diisi.");
-
-      // Upload video file jika ada
+      // ── Upload video file DULU (untuk kategori video) ──
       let videoFileUrl = currentProject.VideoFile || "";
       if (videoUploadFile) {
         setUploadingFile(true);
@@ -443,6 +436,26 @@ const AdminDashboard = () => {
           Swal.fire({ icon: "warning", title: "Upload Video Gagal", text: err.message, background: "#0a0a0c", color: "#fff", confirmButtonColor: "#bfa37a" });
         } finally {
           setUploadingFile(false);
+        }
+      }
+
+      // Untuk video: wajib ada file video atau link referensi
+      if (currentProject.Category === "video" && !videoFileUrl && !currentProject.Link) {
+        throw new Error("Upload file video (MP4/WebM) atau isi Link referensi untuk project video.");
+      }
+
+      // ── Upload thumbnail ──
+      let imageUrl = currentProject.Img;
+      if (uploadFile) {
+        const url = await uploadToStorage(uploadFile);
+        if (url) imageUrl = url;
+      }
+      // Thumbnail opsional untuk video — gunakan placeholder jika tidak diisi
+      if (!imageUrl) {
+        if (currentProject.Category === "video") {
+          imageUrl = "https://placehold.co/800x500/050507/bfa37a?text=Video";
+        } else {
+          throw new Error("Thumbnail/gambar wajib diisi.");
         }
       }
 
@@ -1132,33 +1145,33 @@ const AdminDashboard = () => {
                 />
               </Field>
 
-              {/* Link — hide for design (no demo link usually) */}
+              {/* Link — opsional untuk video, required untuk website */}
               <Field
-                label={currentProject.Category === "video" ? "URL Video / YouTube" : "Link Demo / Live"}
+                label={
+                  currentProject.Category === "video"
+                    ? "Link Original (Opsional — Instagram, TikTok, YouTube)"
+                    : "Link Demo / Live"
+                }
                 icon={Link2}
-                hint={currentProject.Category === "design" ? "Opsional — bisa link Behance, Dribbble, dll" : ""}
+                hint={
+                  currentProject.Category === "video"
+                    ? "Opsional — hanya untuk referensi link postingan asli di sosmed"
+                    : currentProject.Category === "design"
+                    ? "Opsional — bisa link Behance, Dribbble, dll"
+                    : ""
+                }
               >
                 <input
                   type="text"
                   value={currentProject.Link}
-                  onChange={(e) => {
-                    const newLink = e.target.value;
-                    let nextImg = currentProject.Img;
-                    if (currentProject.Category === "video") {
-                      const ytId = getYoutubeId(newLink);
-                      if (ytId) {
-                        nextImg = `https://img.youtube.com/vi/${ytId}/hqdefault.jpg`;
-                      }
-                    }
-                    setCurrentProject({ ...currentProject, Link: newLink, Img: nextImg });
-                  }}
+                  onChange={(e) => setCurrentProject({ ...currentProject, Link: e.target.value })}
                   placeholder={
-                    currentProject.Category === "video" ? "https://youtube.com/watch?v=..." :
+                    currentProject.Category === "video" ? "https://instagram.com/reel/... (opsional)" :
                     currentProject.Category === "design" ? "https://behance.net/... (opsional)" :
                     "https://mywebsite.com"
                   }
                   className={inputCls}
-                  required={currentProject.Category === "video"}
+                  required={currentProject.Category === "website"}
                 />
               </Field>
 
@@ -1211,59 +1224,20 @@ const AdminDashboard = () => {
                 </Field>
               )}
 
-              {/* Thumbnail / Image */}
-              <div className="border-t border-white/[0.07] pt-4 space-y-3">
-                <p className="text-[11px] font-semibold text-gray-300 uppercase tracking-wider">
-                  {currentProject.Category === "video" ? "Thumbnail Video" : currentProject.Category === "design" ? "File Gambar / Poster" : "Screenshot / Preview"}
-                </p>
-
-                {/* Upload zone */}
-                <div>
-                  <p className="text-[10px] text-gray-500 mb-1.5">Opsi 1: Upload dari Perangkat</p>
-                  <UploadZone
-                    uploadFile={uploadFile}
-                    setUploadFile={setUploadFile}
-                    uploadingFile={uploadingFile}
-                    accept="image/*"
-                    label={currentProject.Category === "design" ? "Poster/Gambar" : "Thumbnail"}
-                  />
-                </div>
-
-                {/* URL fallback */}
-                <div>
-                  <p className="text-[10px] text-gray-500 mb-1.5">Opsi 2: URL Gambar Langsung</p>
-                  <div className="relative">
-                    <Image className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none" />
-                    <input
-                      type="text"
-                      value={currentProject.Img}
-                      onChange={(e) => setCurrentProject({ ...currentProject, Img: e.target.value })}
-                      placeholder="https://images.unsplash.com/..."
-                      className={`${inputCls} pl-10`}
-                      disabled={!!uploadFile}
-                    />
-                  </div>
-                  {uploadFile && <p className="text-[10px] text-amber-400 mt-1">File dipilih — kolom URL dikunci.</p>}
-                </div>
-
-                {/* Current image preview */}
-                {currentProject.Img && !uploadFile && (
-                  <div className="rounded-xl overflow-hidden border border-white/10 aspect-video">
-                    <img src={currentProject.Img} alt="preview" className="w-full h-full object-cover" />
-                  </div>
-                )}
-              </div>
-
-              {/* Video File Upload — hanya untuk kategori video */}
+              {/* ═══ VIDEO FILE UPLOAD (UTAMA untuk kategori video) ═══ */}
               {currentProject.Category === "video" && (
-                <div className="border-t border-white/[0.07] pt-4 space-y-3">
-                  <div>
-                    <p className="text-[11px] font-semibold text-gray-300 uppercase tracking-wider flex items-center gap-2">
+                <div className="border-t border-white/[0.07] pt-4 space-y-4">
+                  <div className="flex items-center gap-2">
+                    <div className="w-6 h-6 rounded-full bg-red-500/20 flex items-center justify-center flex-shrink-0">
                       <Video className="w-3.5 h-3.5 text-red-400" />
-                      File Video (untuk Preview Hover)
-                    </p>
-                    <p className="text-[10px] text-gray-500 mt-1">Upload file video MP4/WebM agar video dapat diputar langsung di portfolio saat di-hover. Tanpa ini, hanya thumbnail yang ditampilkan.</p>
+                    </div>
+                    <div>
+                      <p className="text-[11px] font-semibold text-white uppercase tracking-wider">File Video</p>
+                      <p className="text-[10px] text-gray-500">Upload file video MP4/WebM — ini yang akan diputar langsung di portfolio</p>
+                    </div>
                   </div>
+
+                  {/* Video upload zone */}
                   <UploadZone
                     uploadFile={videoUploadFile}
                     setUploadFile={setVideoUploadFile}
@@ -1271,9 +1245,10 @@ const AdminDashboard = () => {
                     accept="video/mp4,video/webm,video/ogg,video/*"
                     label="Video (MP4/WebM)"
                   />
+
                   {/* URL video langsung */}
                   <div>
-                    <p className="text-[10px] text-gray-500 mb-1.5">Atau masukkan URL video langsung (MP4/WebM dari Supabase atau CDN):</p>
+                    <p className="text-[10px] text-gray-500 mb-1.5">Atau masukkan URL video langsung (MP4/WebM dari Supabase/CDN):</p>
                     <input
                       type="text"
                       value={currentProject.VideoFile}
@@ -1284,9 +1259,83 @@ const AdminDashboard = () => {
                     />
                     {videoUploadFile && <p className="text-[10px] text-amber-400 mt-1">File video dipilih — kolom URL dikunci.</p>}
                   </div>
-                  {currentProject.VideoFile && !videoUploadFile && (
+
+                  {/* Video preview */}
+                  {(currentProject.VideoFile && !videoUploadFile) && (
                     <div className="rounded-xl overflow-hidden border border-white/10 aspect-video bg-black">
                       <video src={currentProject.VideoFile} controls className="w-full h-full object-contain" />
+                    </div>
+                  )}
+
+                  {/* Thumbnail section untuk video */}
+                  <div className="border-t border-white/[0.07] pt-3 space-y-2">
+                    <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Thumbnail / Cover Video</p>
+                    <p className="text-[10px] text-gray-500">Gambar yang tampil sebelum video diputar. Bisa upload gambar atau isi URL.</p>
+                    <UploadZone
+                      uploadFile={uploadFile}
+                      setUploadFile={setUploadFile}
+                      uploadingFile={uploadingFile}
+                      accept="image/*"
+                      label="Thumbnail"
+                    />
+                    <div className="relative">
+                      <Image className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none" />
+                      <input
+                        type="text"
+                        value={currentProject.Img}
+                        onChange={(e) => setCurrentProject({ ...currentProject, Img: e.target.value })}
+                        placeholder="https://images.unsplash.com/... (atau URL thumbnail)"
+                        className={`${inputCls} pl-10`}
+                        disabled={!!uploadFile}
+                      />
+                    </div>
+                    {uploadFile && <p className="text-[10px] text-amber-400">File dipilih — kolom URL dikunci.</p>}
+                    {currentProject.Img && !uploadFile && (
+                      <div className="rounded-xl overflow-hidden border border-white/10 aspect-video">
+                        <img src={currentProject.Img} alt="thumbnail preview" className="w-full h-full object-cover" />
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Thumbnail / Image — untuk non-video */}
+              {currentProject.Category !== "video" && (
+                <div className="border-t border-white/[0.07] pt-4 space-y-3">
+                  <p className="text-[11px] font-semibold text-gray-300 uppercase tracking-wider">
+                    {currentProject.Category === "design" ? "File Gambar / Poster" : "Screenshot / Preview"}
+                  </p>
+
+                  <div>
+                    <p className="text-[10px] text-gray-500 mb-1.5">Opsi 1: Upload dari Perangkat</p>
+                    <UploadZone
+                      uploadFile={uploadFile}
+                      setUploadFile={setUploadFile}
+                      uploadingFile={uploadingFile}
+                      accept="image/*"
+                      label={currentProject.Category === "design" ? "Poster/Gambar" : "Thumbnail"}
+                    />
+                  </div>
+
+                  <div>
+                    <p className="text-[10px] text-gray-500 mb-1.5">Opsi 2: URL Gambar Langsung</p>
+                    <div className="relative">
+                      <Image className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none" />
+                      <input
+                        type="text"
+                        value={currentProject.Img}
+                        onChange={(e) => setCurrentProject({ ...currentProject, Img: e.target.value })}
+                        placeholder="https://images.unsplash.com/..."
+                        className={`${inputCls} pl-10`}
+                        disabled={!!uploadFile}
+                      />
+                    </div>
+                    {uploadFile && <p className="text-[10px] text-amber-400 mt-1">File dipilih — kolom URL dikunci.</p>}
+                  </div>
+
+                  {currentProject.Img && !uploadFile && (
+                    <div className="rounded-xl overflow-hidden border border-white/10 aspect-video">
+                      <img src={currentProject.Img} alt="preview" className="w-full h-full object-cover" />
                     </div>
                   )}
                 </div>
