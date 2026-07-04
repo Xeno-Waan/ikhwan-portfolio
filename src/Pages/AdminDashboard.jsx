@@ -146,12 +146,13 @@ const AdminDashboard = () => {
   const [showCertModal, setShowCertModal] = useState(false);
   const [currentProject, setCurrentProject] = useState({
     id: null, Title: "", Description: "", Link: "", Img: "",
-    Category: "website", Github: "", Features: "", TechStack: ""
+    Category: "website", Github: "", Features: "", TechStack: "", VideoFile: ""
   });
   const [currentCert, setCurrentCert] = useState({ id: null, Img: "" });
 
   // Upload state (shared but reset per modal open)
   const [uploadFile, setUploadFile] = useState(null);
+  const [videoUploadFile, setVideoUploadFile] = useState(null);
   const [certUploadFile, setCertUploadFile] = useState(null);
   const [uploadingFile, setUploadingFile] = useState(false);
 
@@ -404,12 +405,14 @@ const AdminDashboard = () => {
         Link: proj.Link || "", Img: proj.Img || "", Category: proj.Category || "website",
         Github: proj.Github || "",
         Features: Array.isArray(proj.Features) ? proj.Features.join("\n") : (proj.Features || ""),
-        TechStack: Array.isArray(proj.TechStack) ? proj.TechStack.join(", ") : (proj.TechStack || "")
+        TechStack: Array.isArray(proj.TechStack) ? proj.TechStack.join(", ") : (proj.TechStack || ""),
+        VideoFile: proj.VideoFile || ""
       });
     } else {
-      setCurrentProject({ id: null, Title: "", Description: "", Link: "", Img: "", Category: defaultCat, Github: "", Features: "", TechStack: "" });
+      setCurrentProject({ id: null, Title: "", Description: "", Link: "", Img: "", Category: defaultCat, Github: "", Features: "", TechStack: "", VideoFile: "" });
     }
     setUploadFile(null);
+    setVideoUploadFile(null);
     setShowProjectModal(true);
   };
 
@@ -424,6 +427,25 @@ const AdminDashboard = () => {
       }
       if (!imageUrl) throw new Error("Thumbnail/gambar wajib diisi.");
 
+      // Upload video file jika ada
+      let videoFileUrl = currentProject.VideoFile || "";
+      if (videoUploadFile) {
+        setUploadingFile(true);
+        try {
+          const fileExt = videoUploadFile.name.split('.').pop();
+          const fileName = `${Date.now()}_${Math.random().toString(36).substring(2)}.${fileExt}`;
+          const filePath = `video-uploads/${fileName}`;
+          const { error: upErr } = await supabase.storage.from('profile-images').upload(filePath, videoUploadFile);
+          if (upErr) throw upErr;
+          const { data: { publicUrl } } = supabase.storage.from('profile-images').getPublicUrl(filePath);
+          videoFileUrl = publicUrl;
+        } catch (err) {
+          Swal.fire({ icon: "warning", title: "Upload Video Gagal", text: err.message, background: "#0a0a0c", color: "#fff", confirmButtonColor: "#bfa37a" });
+        } finally {
+          setUploadingFile(false);
+        }
+      }
+
       const payload = {
         Title: currentProject.Title || (currentProject.Category === "design" ? "Design Project" : ""),
         Description: currentProject.Description || "",
@@ -434,7 +456,8 @@ const AdminDashboard = () => {
         Features: typeof currentProject.Features === "string"
           ? currentProject.Features.split("\n").map(f => f.trim()).filter(Boolean) : (Array.isArray(currentProject.Features) ? currentProject.Features : []),
         TechStack: typeof currentProject.TechStack === "string"
-          ? currentProject.TechStack.split(",").map(t => t.trim()).filter(Boolean) : (Array.isArray(currentProject.TechStack) ? currentProject.TechStack : [])
+          ? currentProject.TechStack.split(",").map(t => t.trim()).filter(Boolean) : (Array.isArray(currentProject.TechStack) ? currentProject.TechStack : []),
+        VideoFile: videoFileUrl
       };
 
       if (currentProject.id) {
@@ -1230,6 +1253,44 @@ const AdminDashboard = () => {
                   </div>
                 )}
               </div>
+
+              {/* Video File Upload — hanya untuk kategori video */}
+              {currentProject.Category === "video" && (
+                <div className="border-t border-white/[0.07] pt-4 space-y-3">
+                  <div>
+                    <p className="text-[11px] font-semibold text-gray-300 uppercase tracking-wider flex items-center gap-2">
+                      <Video className="w-3.5 h-3.5 text-red-400" />
+                      File Video (untuk Preview Hover)
+                    </p>
+                    <p className="text-[10px] text-gray-500 mt-1">Upload file video MP4/WebM agar video dapat diputar langsung di portfolio saat di-hover. Tanpa ini, hanya thumbnail yang ditampilkan.</p>
+                  </div>
+                  <UploadZone
+                    uploadFile={videoUploadFile}
+                    setUploadFile={setVideoUploadFile}
+                    uploadingFile={uploadingFile}
+                    accept="video/mp4,video/webm,video/ogg,video/*"
+                    label="Video (MP4/WebM)"
+                  />
+                  {/* URL video langsung */}
+                  <div>
+                    <p className="text-[10px] text-gray-500 mb-1.5">Atau masukkan URL video langsung (MP4/WebM dari Supabase atau CDN):</p>
+                    <input
+                      type="text"
+                      value={currentProject.VideoFile}
+                      onChange={(e) => setCurrentProject({ ...currentProject, VideoFile: e.target.value })}
+                      placeholder="https://...supabase.co/.../video.mp4"
+                      className={inputCls}
+                      disabled={!!videoUploadFile}
+                    />
+                    {videoUploadFile && <p className="text-[10px] text-amber-400 mt-1">File video dipilih — kolom URL dikunci.</p>}
+                  </div>
+                  {currentProject.VideoFile && !videoUploadFile && (
+                    <div className="rounded-xl overflow-hidden border border-white/10 aspect-video bg-black">
+                      <video src={currentProject.VideoFile} controls className="w-full h-full object-contain" />
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Actions */}
               <div className="flex justify-end gap-3 border-t border-white/[0.07] pt-5">

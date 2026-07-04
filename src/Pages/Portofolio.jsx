@@ -200,6 +200,7 @@ export default function FullWidthTabs() {
                   Title={project.Title}
                   Description={project.Description}
                   Link={project.Link}
+                  VideoFile={project.VideoFile}
                   id={project.id}
                   Category={project.Category}
                 />

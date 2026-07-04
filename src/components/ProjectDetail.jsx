@@ -6,6 +6,106 @@ import {
 } from "lucide-react";
 import Swal from 'sweetalert2';
 
+const renderVideoPlayer = (url, title) => {
+  if (!url) return <div className="text-white text-center p-4">Video tidak tersedia</div>;
+
+  const lowerUrl = url.toLowerCase();
+  const isVertical = lowerUrl.includes("instagram.com") || lowerUrl.includes("tiktok.com");
+  const containerClass = `w-full ${isVertical ? 'aspect-[9/16] max-w-[400px] mx-auto' : 'aspect-video'} rounded-2xl overflow-hidden border border-white/10 shadow-2xl bg-black`;
+
+  let player = null;
+
+  // YouTube
+  const ytRegExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=|shorts\/)([^#\&\?]*).*/;
+  const ytMatch = url.match(ytRegExp);
+  const ytId = (ytMatch && ytMatch[2].length === 11) ? ytMatch[2] : null;
+  if (ytId) {
+    player = (
+      <iframe
+        src={`https://www.youtube.com/embed/${ytId}`}
+        title={title}
+        frameBorder="0"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+        allowFullScreen
+        className="w-full h-full"
+      ></iframe>
+    );
+  }
+
+  // Instagram
+  const igMatch = url.match(/instagram\.com\/(p|reel|tv)\/([a-zA-Z0-9-_]+)/);
+  if (igMatch && !player) {
+    player = (
+      <iframe
+        src={`https://www.instagram.com/p/${igMatch[2]}/embed/`}
+        title={title}
+        frameBorder="0"
+        allowFullScreen
+        className="w-full h-full"
+      ></iframe>
+    );
+  }
+
+  // TikTok
+  const ttMatch = url.match(/tiktok\.com\/@?[a-zA-Z0-9._-]+\/video\/(\d+)/) || url.match(/tiktok\.com\/embed\/v2\/(\d+)/);
+  if (ttMatch && !player) {
+    player = (
+      <iframe
+        src={`https://www.tiktok.com/embed/v2/${ttMatch[1]}`}
+        title={title}
+        frameBorder="0"
+        allowFullScreen
+        className="w-full h-full"
+      ></iframe>
+    );
+  }
+
+  // Vimeo
+  const vimeoMatch = url.match(/vimeo\.com\/(\d+)/);
+  if (vimeoMatch && !player) {
+    player = (
+      <iframe
+        src={`https://player.vimeo.com/video/${vimeoMatch[1]}`}
+        title={title}
+        frameBorder="0"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        allowFullScreen
+        className="w-full h-full"
+      ></iframe>
+    );
+  }
+
+  // Direct video file (mp4, webm, ogg, etc.)
+  if (!player && (lowerUrl.endsWith('.mp4') || lowerUrl.endsWith('.webm') || lowerUrl.endsWith('.ogg') || lowerUrl.includes('.mp4?') || lowerUrl.includes('.webm?'))) {
+    player = (
+      <video
+        src={url}
+        controls
+        className="w-full h-full object-contain bg-black"
+      />
+    );
+  }
+
+  if (player) {
+    return <div className={containerClass}>{player}</div>;
+  }
+
+  // Fallback to simple iframe or link
+  return (
+    <div className="w-full aspect-video flex flex-col items-center justify-center p-6 bg-slate-900/80 text-center rounded-2xl border border-white/10">
+      <p className="text-gray-300 text-sm mb-4">Video format/platform not directly embeddable, would you like to open it in a new window?</p>
+      <a
+        href={url}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="px-6 py-2.5 bg-gradient-to-r from-[#bfa37a] to-[#dfcfb9] text-slate-950 font-semibold rounded-xl hover:opacity-90 transition-opacity text-sm"
+      >
+        Open Video Link
+      </a>
+    </div>
+  );
+};
+
 const TECH_ICONS = {
   React: Globe,
   Tailwind: Layout,
@@ -221,15 +321,20 @@ const ProjectDetails = () => {
 
             <div className="space-y-6 md:space-y-10 animate-slideInRight">
               <div className="relative rounded-2xl overflow-hidden border border-white/10 shadow-2xl group">
-              
-                <div className="absolute inset-0 bg-gradient-to-t from-[#050507] via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                <img
-                  src={project.Img}
-                  alt={project.Title}
-                  className="w-full  object-cover transform transition-transform duration-700 will-change-transform group-hover:scale-105"
-                  onLoad={() => setIsImageLoaded(true)}
-                />
-                <div className="absolute inset-0 border-2 border-white/0 group-hover:border-white/10 transition-colors duration-300 rounded-2xl" />
+                {project.Category?.toLowerCase() === 'video' ? (
+                  renderVideoPlayer(project.Link, project.Title)
+                ) : (
+                  <>
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#050507] via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                    <img
+                      src={project.Img}
+                      alt={project.Title}
+                      className="w-full  object-cover transform transition-transform duration-700 will-change-transform group-hover:scale-105"
+                      onLoad={() => setIsImageLoaded(true)}
+                    />
+                    <div className="absolute inset-0 border-2 border-white/0 group-hover:border-white/10 transition-colors duration-300 rounded-2xl" />
+                  </>
+                )}
               </div>
 
               {/* Fitur Utama */}
