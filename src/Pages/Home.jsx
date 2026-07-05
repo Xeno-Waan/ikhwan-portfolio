@@ -76,7 +76,7 @@ const TYPING_SPEED = 100;
 const ERASING_SPEED = 50;
 const PAUSE_DURATION = 2000;
 const WORDS = ["Informatics Student @ STIKOM El Rahma", "Web Developer", "UI/UX Designer", "Video Editor"];
-const TECH_STACK = ["React & JavaScript", "HTML/CSS & PHP", "Figma & Adobe", "Premiere & After Effects"];
+const TECH_STACK = ["React & JavaScript", "HTML/CSS & PHP", "Figma & Canva", "Premiere & After Effects"];
 const SOCIAL_LINKS = [
   { icon: Github, link: "https://github.com/Xeno-Waan" },
   { icon: Linkedin, link: "https://www.linkedin.com/in/muhammad-ikhwan-manshur-3ba78a352?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=android_app" },
