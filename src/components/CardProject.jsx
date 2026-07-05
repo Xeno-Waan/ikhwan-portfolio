@@ -247,32 +247,45 @@ const CardProject = ({ Img, Title, Description, Link: ProjectLink, VideoFile, id
       
           <div className="relative p-5 z-10">
             <div className="relative overflow-hidden rounded-lg aspect-[4/5] bg-black">
-              {/* Static thumbnail — tersembunyi saat video preview aktif */}
-              <img
-                src={Img}
-                alt={Title}
-                className={`w-full h-full object-cover transition-all duration-300 ${
-                  playPreview ? 'opacity-0' : 'group-hover:scale-105 opacity-100'
-                }`}
-              />
-              {/* Video preview langsung via ref (zero-delay, tanpa iframe) */}
-              {isVideo && VideoFile && (
-                <video
-                  ref={videoRef}
-                  src={VideoFile}
-                  muted
-                  loop
-                  playsInline
-                  preload="metadata"
-                  className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-300 ${
-                    hovered ? 'opacity-100' : 'opacity-0'
-                  }`}
-                />
-              )}
-              {/* Preview player untuk YouTube/Vimeo/MP4-link (hanya muncul saat tidak ada VideoFile) */}
-              {previewPlayer && !VideoFile && (
-                <div className="absolute inset-0 transition-opacity duration-300 opacity-100">
-                  {previewPlayer}
+              {/* Jika ada VideoFile: video IS the thumbnail (langsung putar saat hover) */}
+              {isVideo && VideoFile ? (
+                <>
+                  {/* Frame pertama video sebagai "poster" saat tidak hover */}
+                  <video
+                    ref={videoRef}
+                    src={VideoFile}
+                    muted
+                    loop
+                    playsInline
+                    preload="metadata"
+                    className="absolute inset-0 w-full h-full object-cover"
+                  />
+                  {/* Overlay gelap tipis saat tidak hover, hilang saat hover */}
+                  <div className={`absolute inset-0 bg-black transition-opacity duration-300 ${
+                    hovered ? 'opacity-0' : 'opacity-40'
+                  }`} />
+                </>
+              ) : Img ? (
+                /* Thumbnail gambar biasa */
+                <>
+                  <img
+                    src={Img}
+                    alt={Title}
+                    className={`w-full h-full object-cover transition-all duration-300 ${
+                      playPreview ? 'opacity-0' : 'group-hover:scale-105 opacity-100'
+                    }`}
+                  />
+                  {/* Preview player untuk YouTube/Vimeo/MP4-link */}
+                  {previewPlayer && (
+                    <div className="absolute inset-0 transition-opacity duration-300 opacity-100">
+                      {previewPlayer}
+                    </div>
+                  )}
+                </>
+              ) : (
+                /* Placeholder kalau tidak ada thumbnail maupun VideoFile */
+                <div className="w-full h-full flex items-center justify-center bg-slate-900/80">
+                  <Play className="w-10 h-10 text-white/20" />
                 </div>
               )}
               {/* Overlay: Design — Eye icon on hover */}
