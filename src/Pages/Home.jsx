@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useCallback, memo } from "react"
 import { Link } from "react-router-dom"
 import { Github, Linkedin, Mail, ExternalLink, Instagram, Sparkles } from "lucide-react"
-import { useLang } from "../LanguageContext"
+import { useLanguage } from "../context/LanguageContext"
+import translations from "../translations"
 
 // Memoized Components
 const StatusBadge = memo(({ label }) => (
@@ -54,7 +55,7 @@ const CTAButton = memo(({ href, text, icon: Icon }) => (
           <span className="bg-gradient-to-r from-gray-200 to-white bg-clip-text text-transparent font-medium z-10">
             {text}
           </span>
-          <Icon className={`w-4 h-4 text-gray-200 ${text === 'Contact' ? 'group-hover:translate-x-1' : 'group-hover:rotate-45'} transform transition-all duration-300 z-10`} />
+          <Icon className={`w-4 h-4 text-gray-200 ${text === 'Contact' || text === 'Kontak' ? 'group-hover:translate-x-1' : 'group-hover:rotate-45'} transform transition-all duration-300 z-10`} />
         </span>
       </div>
     </button>
@@ -76,7 +77,7 @@ const SocialLink = memo(({ icon: Icon, link }) => (
 const TYPING_SPEED = 100;
 const ERASING_SPEED = 50;
 const PAUSE_DURATION = 2000;
-const TECH_STACK = ["Figma & Canva", "Premiere & After Effects"];
+
 const SOCIAL_LINKS = [
   { icon: Github, link: "https://github.com/Xeno-Waan" },
   { icon: Linkedin, link: "https://www.linkedin.com/in/muhammad-ikhwan-manshur-3ba78a352?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=android_app" },
@@ -84,8 +85,8 @@ const SOCIAL_LINKS = [
 ];
 
 const Home = () => {
-  const { t } = useLang();
-  const WORDS = t.home.words;
+  const { lang } = useLanguage();
+  const t = translations[lang].home;
 
   const [text, setText] = useState("")
   const [isTyping, setIsTyping] = useState(true)
@@ -100,14 +101,15 @@ const Home = () => {
     setWordIndex(0);
     setCharIndex(0);
     setIsTyping(true);
-  }, [WORDS[0]]);
+  }, [lang]);
 
   useEffect(() => {
     setIsLoaded(true);
     return () => setIsLoaded(false);
   }, []);
 
-  // Optimize typing effect
+  const WORDS = t.typingWords;
+
   const handleTyping = useCallback(() => {
     if (isTyping) {
       if (charIndex < WORDS[wordIndex].length) {
@@ -125,7 +127,7 @@ const Home = () => {
         setIsTyping(true);
       }
     }
-  }, [charIndex, isTyping, wordIndex]);
+  }, [charIndex, isTyping, wordIndex, WORDS]);
 
   useEffect(() => {
     const timeout = setTimeout(
@@ -143,7 +145,7 @@ const Home = () => {
             {/* Left Column */}
             <div className="w-full lg:w-1/2 space-y-4 sm:space-y-5 text-left lg:text-left order-1 lg:order-1">
               <div className="space-y-3 sm:space-y-4">
-                <StatusBadge label={t.home.badge} />
+                <StatusBadge label={t.statusBadge} />
                 <MainTitle />
 
                 {/* Typing Effect */}
@@ -156,20 +158,20 @@ const Home = () => {
 
                 {/* Description */}
                 <p className="text-sm md:text-base text-gray-400 max-w-xl leading-relaxed font-light">
-                  {t.home.description}
+                  {t.description}
                 </p>
 
                 {/* Tech Stack */}
                 <div className="flex flex-wrap gap-2 justify-start">
-                  {TECH_STACK.map((tech, index) => (
+                  {t.techStack.map((tech, index) => (
                     <TechStack key={index} tech={tech} />
                   ))}
                 </div>
 
                 {/* CTA Buttons */}
                 <div className="flex flex-row gap-3 w-full justify-start">
-                  <CTAButton href="/projects" text={t.home.viewProjects} icon={ExternalLink} />
-                  <CTAButton href="/contact" text={t.home.contact} icon={Mail} />
+                  <CTAButton href="/projects" text={t.btnProjects} icon={ExternalLink} />
+                  <CTAButton href="/contact" text={t.btnContact} icon={Mail} />
                 </div>
 
                 {/* Social Links */}
@@ -185,7 +187,7 @@ const Home = () => {
             <div className="w-full lg:w-1/2 h-auto relative flex items-center justify-center order-2 lg:order-2"
               onMouseEnter={() => setIsHovering(true)}
               onMouseLeave={() => setIsHovering(false)}>
-              <div className="relative w-56 h-56 sm:w-72 sm:h-72 lg:w-80 lg:h-80 opacity-95 group">
+              <div className={`relative w-56 h-56 sm:w-72 sm:h-72 lg:w-80 lg:h-80 opacity-95 group`}>
                 {/* Glowing Aura */}
                 <div className={`absolute -inset-4 bg-gradient-to-r from-[#bfa37a]/15 to-[#dfcfb9]/15 rounded-full blur-3xl transition-all duration-1000 ease-in-out ${
                   isHovering ? "opacity-75 scale-110" : "opacity-40 scale-100"
@@ -210,7 +212,7 @@ const Home = () => {
                   {/* Bottom overlay badge */}
                   <div className="absolute bottom-4 left-4 right-4 p-3 rounded-xl bg-black/70 backdrop-blur-md border border-white/10 transition-all duration-500 transform translate-y-2 group-hover:translate-y-0 opacity-0 group-hover:opacity-100">
                     <p className="text-white font-serif font-semibold text-sm sm:text-base">M. Ikhwan Manshur</p>
-                     <p className="text-xs text-gray-400 font-light">{t.home.subtitle}</p>
+                    <p className="text-xs text-gray-400 font-light">Web Dev · Design · Video Editing</p>
                   </div>
                 </div>
               </div>

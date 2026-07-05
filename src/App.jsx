@@ -14,9 +14,10 @@ import NotFoundPage from "./Pages/404";
 import Login from "./Pages/Login";
 import AdminDashboard from "./Pages/AdminDashboard";
 import ProtectedRoute from "./components/ProtectedRoute";
-import { LanguageProvider } from "./LanguageContext";
 import AOS from 'aos';
 import 'aos/dist/aos.css';
+import { LanguageProvider, useLanguage } from "./context/LanguageContext";
+import translations from "./translations";
 
 // Pages that fit in one screen (no scroll) — shown inside a card frame
 const FULL_PAGE_ROUTES = ["/", "/about", "/contact"];
@@ -89,19 +90,28 @@ const PageLayout = ({ children, fullPage }) => {
           <PageTransition>{children}</PageTransition>
         </div>
         <footer className="mt-auto">
-          <center>
-            <hr className="my-3 border-gray-400 opacity-15 sm:mx-auto lg:my-6 text-center" />
-            <span className="block text-sm pb-4 text-gray-500 text-center dark:text-gray-400">
-              © 2026{" "}
-              <Link to="/" className="hover:underline">
-                Muhammad Ikhwan Manshur
-              </Link>
-              . All Rights Reserved.
-            </span>
-          </center>
+          <FooterText />
         </footer>
       </div>
     </>
+  );
+};
+
+// Footer with translations
+const FooterText = () => {
+  const { lang } = useLanguage();
+  const t = translations[lang].footer;
+  return (
+    <center>
+      <hr className="my-3 border-gray-400 opacity-15 sm:mx-auto lg:my-6 text-center" />
+      <span className="block text-sm pb-4 text-gray-500 text-center dark:text-gray-400">
+        © 2026{" "}
+        <Link to="/" className="hover:underline">
+          Muhammad Ikhwan Manshur
+        </Link>
+        . {t.rights}
+      </span>
+    </center>
   );
 };
 

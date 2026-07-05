@@ -1,22 +1,24 @@
 import React, { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Menu, X } from "lucide-react";
-import { useLang } from "../LanguageContext";
+import { useLanguage } from "../context/LanguageContext";
+import translations from "../translations";
 
 const Navbar = () => {
     const [isOpen, setIsOpen] = useState(false);
     const [scrolled, setScrolled] = useState(false);
     const location = useLocation();
     const activePath = location.pathname;
-    const { lang, t, toggleLang } = useLang();
+    const { lang, toggleLang } = useLanguage();
+    const t = translations[lang].nav;
 
     const navItems = [
-        { path: "/", label: t.nav.home },
-        { path: "/about", label: t.nav.about },
-        { path: "/projects", label: t.nav.projects },
-        { path: "/certificates", label: t.nav.certificates },
-        { path: "/contact", label: t.nav.contact },
-        { path: "/comments", label: t.nav.comments },
+        { path: "/", label: t.home },
+        { path: "/about", label: t.about },
+        { path: "/projects", label: t.projects },
+        { path: "/certificates", label: t.certificates },
+        { path: "/contact", label: t.contact },
+        { path: "/comments", label: t.comments },
     ];
 
     useEffect(() => {
@@ -60,7 +62,7 @@ const Navbar = () => {
                         </Link>
                     </div>
 
-                    {/* Desktop Navigation + Lang Toggle */}
+                    {/* Desktop Navigation */}
                     <div className="hidden md:flex items-center gap-3">
                         {/* Tab Container */}
                         <div className="relative flex items-center bg-white/[0.03] border border-white/[0.08] rounded-2xl px-1.5 py-1.5 gap-0.5 backdrop-blur-md">
@@ -88,23 +90,27 @@ const Navbar = () => {
                         {/* Language Toggle */}
                         <button
                             onClick={toggleLang}
-                            title={lang === "en" ? "Switch to Indonesian" : "Ganti ke Inggris"}
-                            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-white/[0.04] border border-white/[0.08] hover:border-[#bfa37a]/40 hover:bg-[#bfa37a]/10 transition-all duration-300 text-xs font-medium text-gray-300 hover:text-[#dfcfb9] backdrop-blur-md"
+                            className="relative flex items-center gap-1 px-3 py-1.5 rounded-xl bg-white/[0.04] border border-white/[0.08] hover:border-[#bfa37a]/40 transition-all duration-300 group"
+                            title="Toggle Language"
                         >
-                            <span className="text-base leading-none">{lang === "en" ? "🇬🇧" : "🇮🇩"}</span>
-                            <span className="uppercase tracking-wider text-[10px]">{lang === "en" ? "EN" : "ID"}</span>
+                            <span className={`text-[10px] font-bold transition-all duration-300 ${lang === 'en' ? 'text-[#bfa37a]' : 'text-gray-400'}`}>EN</span>
+                            <span className="text-gray-600 text-[10px]">/</span>
+                            <span className={`text-[10px] font-bold transition-all duration-300 ${lang === 'id' ? 'text-[#bfa37a]' : 'text-gray-400'}`}>ID</span>
                         </button>
                     </div>
 
-                    {/* Mobile right side: lang toggle + hamburger */}
+                    {/* Mobile right side */}
                     <div className="md:hidden flex items-center gap-2">
+                        {/* Language toggle mobile */}
                         <button
                             onClick={toggleLang}
-                            className="flex items-center gap-1 px-2 py-1 rounded-lg bg-white/[0.04] border border-white/[0.08] text-xs text-gray-300"
+                            className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white/[0.04] border border-white/[0.08] hover:border-[#bfa37a]/40 transition-all duration-300"
                         >
-                            <span>{lang === "en" ? "🇬🇧" : "🇮🇩"}</span>
-                            <span className="uppercase text-[10px]">{lang === "en" ? "EN" : "ID"}</span>
+                            <span className={`text-[10px] font-bold ${lang === 'en' ? 'text-[#bfa37a]' : 'text-gray-400'}`}>EN</span>
+                            <span className="text-gray-600 text-[10px]">/</span>
+                            <span className={`text-[10px] font-bold ${lang === 'id' ? 'text-[#bfa37a]' : 'text-gray-400'}`}>ID</span>
                         </button>
+                        {/* Hamburger */}
                         <button
                             onClick={() => setIsOpen(!isOpen)}
                             className={`relative p-2 text-[#dfcfb9] hover:text-white transition-transform duration-300 ease-in-out transform ${

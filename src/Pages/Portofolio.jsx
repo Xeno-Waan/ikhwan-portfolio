@@ -13,6 +13,8 @@ import CardProject from "../components/CardProject";
 import TechStackIcon from "../components/TechStackIcon";
 import Certificate from "../components/Certificate";
 import { Code, Award, Boxes, Globe, Palette, Video } from "lucide-react";
+import { useLanguage } from "../context/LanguageContext";
+import translations from "../translations";
 
 function TabPanel({ children, value, index, ...other }) {
   return (
@@ -126,6 +128,8 @@ export default function FullWidthTabs() {
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const [value, setValue] = useState(0);
   const [projects, setProjects] = useState(defaultProjects);
+  const { lang } = useLanguage();
+  const t = translations[lang].projects;
 
   const fetchData = useCallback(async () => {
     if (!supabase) {
@@ -209,7 +213,7 @@ export default function FullWidthTabs() {
           </div>
         ) : (
           <div className="text-center py-20 text-gray-500 font-light text-sm">
-            No projects in this category yet.
+            {t.empty}
           </div>
         )}
       </div>
@@ -228,11 +232,11 @@ export default function FullWidthTabs() {
             backgroundClip: 'text',
             WebkitTextFillColor: 'transparent'
           }}>
-            Projects Showcase
+            {t.title}
           </span>
         </h2>
         <p className="text-slate-400 max-w-2xl mx-auto text-sm md:text-base mt-2">
-          Explore my projects across different domains, demonstrating practical implementation and design values.
+          {t.subtitle}
         </p>
       </div>
 
@@ -305,26 +309,10 @@ export default function FullWidthTabs() {
               },
             }}
           >
-            <Tab
-              icon={<Boxes className="mb-2 w-5 h-5 transition-all duration-300" />}
-              label="All"
-              {...a11yProps(0)}
-            />
-            <Tab
-              icon={<Globe className="mb-2 w-5 h-5 transition-all duration-300" />}
-              label="Websites"
-              {...a11yProps(1)}
-            />
-            <Tab
-              icon={<Palette className="mb-2 w-5 h-5 transition-all duration-300" />}
-              label="Design"
-              {...a11yProps(2)}
-            />
-            <Tab
-              icon={<Video className="mb-2 w-5 h-5 transition-all duration-300" />}
-              label="Video"
-              {...a11yProps(3)}
-            />
+            <Tab icon={<Boxes className="mb-2 w-5 h-5 transition-all duration-300" />} label={t.tabs.all} {...a11yProps(0)} />
+            <Tab icon={<Globe className="mb-2 w-5 h-5 transition-all duration-300" />} label={t.tabs.websites} {...a11yProps(1)} />
+            <Tab icon={<Palette className="mb-2 w-5 h-5 transition-all duration-300" />} label={t.tabs.design} {...a11yProps(2)} />
+            <Tab icon={<Video className="mb-2 w-5 h-5 transition-all duration-300" />} label={t.tabs.video} {...a11yProps(3)} />
           </Tabs>
         </AppBar>
 
@@ -347,31 +335,29 @@ export default function FullWidthTabs() {
                   <div className="space-y-6">
                     <div className="flex items-center gap-3 border-b border-white/5 pb-2">
                       <span className="w-1.5 h-6 rounded-full bg-gradient-to-b from-[#bfa37a] to-[#dfcfb9]" />
-                      <h3 className="text-lg font-bold uppercase tracking-wider text-[#dfcfb9] font-serif">Websites</h3>
+                      <h3 className="text-lg font-bold uppercase tracking-wider text-[#dfcfb9] font-serif">{t.sections.websites}</h3>
                       <span className="text-xs text-gray-500 font-mono">({getFilteredProjects(1).length})</span>
                     </div>
                     {renderProjectGrid(getFilteredProjects(1))}
                   </div>
                 )}
 
-                {/* Poster & Design Section */}
                 {getFilteredProjects(2).length > 0 && (
                   <div className="space-y-6">
                     <div className="flex items-center gap-3 border-b border-white/5 pb-2">
                       <span className="w-1.5 h-6 rounded-full bg-gradient-to-b from-[#bfa37a] to-[#dfcfb9]" />
-                      <h3 className="text-lg font-bold uppercase tracking-wider text-[#dfcfb9] font-serif">Poster & Design</h3>
+                      <h3 className="text-lg font-bold uppercase tracking-wider text-[#dfcfb9] font-serif">{t.sections.design}</h3>
                       <span className="text-xs text-gray-500 font-mono">({getFilteredProjects(2).length})</span>
                     </div>
                     {renderProjectGrid(getFilteredProjects(2))}
                   </div>
                 )}
 
-                {/* Video & Medsos Section */}
                 {getFilteredProjects(3).length > 0 && (
                   <div className="space-y-6">
                     <div className="flex items-center gap-3 border-b border-white/5 pb-2">
                       <span className="w-1.5 h-6 rounded-full bg-gradient-to-b from-[#bfa37a] to-[#dfcfb9]" />
-                      <h3 className="text-lg font-bold uppercase tracking-wider text-[#dfcfb9] font-serif">Video & Medsos</h3>
+                      <h3 className="text-lg font-bold uppercase tracking-wider text-[#dfcfb9] font-serif">{t.sections.video}</h3>
                       <span className="text-xs text-gray-500 font-mono">({getFilteredProjects(3).length})</span>
                     </div>
                     {renderProjectGrid(getFilteredProjects(3))}

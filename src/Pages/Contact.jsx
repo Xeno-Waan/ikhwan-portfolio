@@ -4,8 +4,13 @@ import { Link } from "react-router-dom";
 import SocialLinks from "../components/SocialLinks";
 import Swal from "sweetalert2";
 import axios from "axios";
+import { useLanguage } from "../context/LanguageContext";
+import translations from "../translations";
 
 const ContactPage = () => {
+  const { lang } = useLanguage();
+  const t = translations[lang].contact;
+
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -26,8 +31,8 @@ const ContactPage = () => {
     setIsSubmitting(true);
 
     Swal.fire({
-      title: 'Mengirim Pesan...',
-      html: 'Harap tunggu selagi kami mengirim pesan Anda',
+      title: t.sendingTitle,
+      html: t.sendingText,
       allowOutsideClick: false,
       didOpen: () => {
         Swal.showLoading();
@@ -40,7 +45,7 @@ const ContactPage = () => {
       submitData.append('name', formData.name);
       submitData.append('email', formData.email);
       submitData.append('message', formData.message);
-      submitData.append('_subject', 'Pesan Baru dari Website Portfolio');
+      submitData.append('_subject', 'New Message from Portfolio Website');
       submitData.append('_captcha', 'false');
       submitData.append('_template', 'table');
 
@@ -49,8 +54,8 @@ const ContactPage = () => {
       });
 
       Swal.fire({
-        title: 'Berhasil!',
-        text: 'Pesan Anda telah berhasil terkirim!',
+        title: t.successTitle,
+        text: t.successText,
         icon: 'success',
         confirmButtonColor: '#bfa37a',
         timer: 2000,
@@ -61,8 +66,8 @@ const ContactPage = () => {
     } catch (error) {
       if (error.request && error.request.status === 0) {
         Swal.fire({
-          title: 'Berhasil!',
-          text: 'Pesan Anda telah berhasil terkirim!',
+          title: t.successTitle,
+          text: t.successText,
           icon: 'success',
           confirmButtonColor: '#bfa37a',
           timer: 2000,
@@ -71,8 +76,8 @@ const ContactPage = () => {
         setFormData({ name: "", email: "", message: "" });
       } else {
         Swal.fire({
-          title: 'Gagal!',
-          text: 'Terjadi kesalahan. Silakan coba lagi nanti.',
+          title: t.errorTitle,
+          text: t.errorText,
           icon: 'error',
           confirmButtonColor: '#bfa37a'
         });
@@ -97,14 +102,14 @@ const ContactPage = () => {
             WebkitTextFillColor: "transparent",
           }}
         >
-          Hubungi Saya
+          {t.title}
         </h1>
         <p
           data-aos="fade-up"
           data-aos-duration="1100"
           className="text-slate-400 max-w-2xl mx-auto text-xs md:text-sm mt-1 font-light"
         >
-          Punya pertanyaan? Kirimi saya pesan dan saya akan segera membalasnya.
+          {t.subtitle}
         </p>
       </div>
 
@@ -119,10 +124,10 @@ const ContactPage = () => {
           <div className="flex justify-between items-start mb-5">
             <div>
               <h2 className="text-2xl font-bold mb-1 font-serif text-transparent bg-clip-text bg-gradient-to-r from-white to-[#dfcfb9]">
-                Hubungi
+                {t.formTitle}
               </h2>
               <p className="text-gray-400 text-xs font-light">
-                Ada yang ingin didiskusikan? Kirim saya pesan.
+                {t.formSubtitle}
               </p>
             </div>
             <Share2 className="w-8 h-8 text-[#bfa37a] opacity-50 flex-shrink-0" />
@@ -134,7 +139,7 @@ const ContactPage = () => {
               <input
                 type="text"
                 name="name"
-                placeholder="Nama Anda"
+                placeholder={t.namePlaceholder}
                 value={formData.name}
                 onChange={handleChange}
                 disabled={isSubmitting}
@@ -147,7 +152,7 @@ const ContactPage = () => {
               <input
                 type="email"
                 name="email"
-                placeholder="Email Anda"
+                placeholder={t.emailPlaceholder}
                 value={formData.email}
                 onChange={handleChange}
                 disabled={isSubmitting}
@@ -159,7 +164,7 @@ const ContactPage = () => {
               <MessageSquare className="absolute left-3.5 top-3.5 w-4 h-4 text-gray-400 group-focus-within:text-[#bfa37a] transition-colors" />
               <textarea
                 name="message"
-                placeholder="Pesan Anda"
+                placeholder={t.messagePlaceholder}
                 value={formData.message}
                 onChange={handleChange}
                 disabled={isSubmitting}
@@ -173,7 +178,7 @@ const ContactPage = () => {
               className="w-full bg-gradient-to-r from-[#bfa37a] to-[#dfcfb9] text-[#050507] py-3 rounded-xl font-semibold text-sm transition-all duration-300 hover:scale-[1.02] hover:shadow-lg hover:shadow-[#bfa37a]/20 active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
             >
               <Send className="w-4 h-4" />
-              {isSubmitting ? 'Mengirim...' : 'Kirim Pesan'}
+              {isSubmitting ? t.btnSending : t.btnSend}
             </button>
           </form>
 
@@ -191,7 +196,7 @@ const ContactPage = () => {
           {/* Contact Info */}
           <div className="bg-white/[0.02] backdrop-blur-xl rounded-2xl p-5 sm:p-7 border border-white/5 hover:border-[#bfa37a]/20 transition-all duration-500 flex-1">
             <h3 className="text-lg font-bold font-serif text-transparent bg-clip-text bg-gradient-to-r from-white to-[#dfcfb9] mb-4">
-              Informasi Kontak
+              {t.infoTitle}
             </h3>
             <div className="space-y-3">
               <div className="flex items-center gap-3 p-3 rounded-xl bg-white/[0.03] border border-white/[0.05]">
@@ -208,8 +213,8 @@ const ContactPage = () => {
                   <Share2 className="w-4 h-4 text-[#bfa37a]" />
                 </div>
                 <div>
-                  <p className="text-[10px] text-gray-500 uppercase tracking-wider">Lokasi</p>
-                  <p className="text-sm text-gray-200 font-light">Yogyakarta, Indonesia</p>
+                  <p className="text-[10px] text-gray-500 uppercase tracking-wider">{t.locationLabel}</p>
+                  <p className="text-sm text-gray-200 font-light">{t.location}</p>
                 </div>
               </div>
             </div>
@@ -224,8 +229,8 @@ const ContactPage = () => {
                   <MessageCircle className="w-6 h-6 text-[#bfa37a]" />
                 </div>
                 <div className="flex-1">
-                  <h4 className="text-sm font-semibold text-white mb-0.5">Tinggalkan Komentar</h4>
-                  <p className="text-xs text-gray-400 font-light">Bagikan kesan atau pertanyaan kamu di halaman komentar</p>
+                  <h4 className="text-sm font-semibold text-white mb-0.5">{t.commentsCTA}</h4>
+                  <p className="text-xs text-gray-400 font-light">{t.commentsDesc}</p>
                 </div>
                 <div className="text-[#bfa37a] group-hover:translate-x-1 transition-transform duration-300">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

@@ -2,6 +2,8 @@ import React, { useEffect, useState, memo, useMemo, useCallback } from "react"
 import { Link } from "react-router-dom"
 import { FileText, Code, Award, Globe, ArrowUpRight, Sparkles, UserCheck, Video, Palette } from "lucide-react"
 import { supabase } from "../supabase"
+import { useLanguage } from "../context/LanguageContext"
+import translations from "../translations"
 
 // Data proyek default yang akan digunakan sebagai fallback jika Supabase tidak tersedia
 const defaultProjects = [
@@ -71,7 +73,7 @@ const defaultCertificates = [
 ];
 
 // Memoized Components
-const Header = memo(() => (
+const Header = memo(({ title, subtitle }) => (
   <div className="text-center mb-2 mt-4">
     <div className="inline-block relative group">
       <h2 
@@ -79,7 +81,7 @@ const Header = memo(() => (
         data-aos="zoom-in-up"
         data-aos-duration="600"
       >
-        About Me
+        {title}
       </h2>
     </div>
     <p 
@@ -88,7 +90,7 @@ const Header = memo(() => (
       data-aos-duration="800"
     >
       <Sparkles className="w-4 h-4 text-amber-400" />
-      Transforming ideas into digital solutions
+      {subtitle}
       <Sparkles className="w-4 h-4 text-amber-400" />
     </p>
   </div>
@@ -139,6 +141,9 @@ const StatCard = memo(({ icon: Icon, color, value, label, animation }) => (
 
 
 const AboutPage = () => {
+  const { lang } = useLanguage();
+  const t = translations[lang].about;
+  const tStats = translations[lang].about.stats;
   const [projects, setProjects] = useState(() => {
     const cached = localStorage.getItem("projects");
     return cached ? JSON.parse(cached) : defaultProjects;
@@ -231,50 +236,45 @@ const AboutPage = () => {
       icon: Code,
       color: "from-[#bfa37a] to-[#dfcfb9]",
       value: stats.totalProjects,
-      label: "Total Projects",
-      description: "All creative works",
+      label: tStats.total,
       animation: "fade-right",
     },
     {
       icon: Globe,
       color: "from-[#dfcfb9] to-[#bfa37a]",
       value: stats.websiteProjects,
-      label: "Websites",
-      description: "Web apps developed",
+      label: tStats.websites,
       animation: "fade-up",
     },
     {
       icon: Palette,
       color: "from-[#bfa37a] to-[#dfcfb9]",
       value: stats.designProjects,
-      label: "Design",
-      description: "Visual designs",
+      label: tStats.design,
       animation: "fade-up",
     },
     {
       icon: Video,
       color: "from-[#dfcfb9] to-[#bfa37a]",
       value: stats.videoProjects,
-      label: "Video",
-      description: "Cinematic edits",
+      label: tStats.video,
       animation: "fade-left",
     },
     {
       icon: Award,
       color: "from-[#bfa37a] to-[#dfcfb9]",
       value: stats.totalCertificates,
-      label: "Certificates",
-      description: "Validated skills",
+      label: tStats.certificates,
       animation: "fade-up",
     },
-  ], [stats]);
+  ], [stats, tStats]);
 
   return (
     <div
       className="h-full overflow-y-auto pb-4 text-white px-[5%] sm:px-[5%] lg:px-[7%]" 
       id="About"
     >
-      <Header />
+      <Header title={t.pageTitle} subtitle={t.pageSubtitle} />
 
       <div className="w-full mx-auto pt-4 sm:pt-6 relative">
         <div className="flex flex-col-reverse lg:grid lg:grid-cols-2 gap-6 lg:gap-10 items-center">
@@ -285,14 +285,14 @@ const AboutPage = () => {
               data-aos-duration="1000"
             >
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-white via-gray-100 to-[#dfcfb9]">
-                Hello, I'm
+                {t.greeting}
               </span>
               <span 
                 className="block mt-2 text-gray-200"
                 data-aos="fade-right"
                 data-aos-duration="1300"
               >
-                Muhammad Ikhwan Manshur
+                {t.name}
               </span>
             </h2>
             
@@ -301,7 +301,7 @@ const AboutPage = () => {
               data-aos="fade-right"
               data-aos-duration="1500"
             >
-              Informatics student with a passion for web development, graphic design, and video editing. Always learning, creating, and turning ideas into meaningful digital experiences.
+              {t.description}
             </p>
 
             {/* Quote Section */}
@@ -312,7 +312,7 @@ const AboutPage = () => {
             >
               <div className="absolute top-0 left-0 w-[3px] h-full bg-gradient-to-b from-[#bfa37a] to-[#dfcfb9]"></div>
               <blockquote className="text-gray-300 italic font-serif text-xs relative z-10">
-               "Technology is best when it brings people together and solves real-world problems."
+               "{t.quote}"
               </blockquote>
             </div>
 
@@ -323,7 +323,7 @@ const AboutPage = () => {
                   data-aos-duration="800"
                   className="px-5 py-2.5 rounded-lg bg-gradient-to-r from-[#bfa37a] to-[#dfcfb9] text-[#050507] font-semibold text-sm transition-all duration-300 hover:scale-105 flex items-center justify-center gap-2 shadow-lg hover:shadow-[0_0_20px_rgba(191,163,122,0.3)]"
                 >
-                  <FileText className="w-4 h-4" /> Download CV
+                  <FileText className="w-4 h-4" /> {t.btnCV}
                 </button>
               </a>
               <Link to="/projects">
@@ -332,7 +332,7 @@ const AboutPage = () => {
                   data-aos-duration="1000"
                   className="px-5 py-2.5 rounded-lg border border-[#bfa37a]/30 text-[#dfcfb9] font-medium text-sm transition-all duration-300 hover:scale-105 hover:border-[#bfa37a]/60 flex items-center justify-center gap-2 hover:bg-[#bfa37a]/5"
                 >
-                  <Code className="w-4 h-4" /> View Projects
+                  <Code className="w-4 h-4" /> {t.btnProjects}
                 </button>
               </Link>
             </div>
