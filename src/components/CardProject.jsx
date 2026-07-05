@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { ExternalLink, ArrowRight, Eye, X, Play } from 'lucide-react';
 import { Modal, IconButton, Box, Backdrop, Typography } from '@mui/material';
@@ -168,13 +168,13 @@ const CardProject = ({ Img, Title, Description, Link: ProjectLink, VideoFile, id
   const [open, setOpen] = useState(false);
   const [hovered, setHovered] = useState(false);
   const [playPreview, setPlayPreview] = useState(false);
+  const videoRef = useRef(null);
 
   const isDesign = Category?.toLowerCase() === 'design';
   const isVideo = Category?.toLowerCase() === 'video';
   const isClickable = isDesign || isVideo;
 
   useEffect(() => {
-    let timer;
     if (hovered && isVideo) {
       // Cek apakah bisa preview (punya file video, YouTube, Vimeo, atau MP4 langsung)
       const hasPreviewable = VideoFile || (() => {
@@ -184,15 +184,23 @@ const CardProject = ({ Img, Title, Description, Link: ProjectLink, VideoFile, id
                l.endsWith('.mp4') || l.endsWith('.webm') || l.endsWith('.ogg');
       })();
       if (hasPreviewable) {
-        timer = setTimeout(() => {
-          setPlayPreview(true);
-        }, 300);
+        setPlayPreview(true);
       }
     } else {
       setPlayPreview(false);
     }
-    return () => clearTimeout(timer);
   }, [hovered, isVideo, VideoFile, ProjectLink]);
+
+  // Langsung play/pause video via ref untuk VideoFile (zero-delay)
+  useEffect(() => {
+    if (!videoRef.current) return;
+    if (hovered) {
+      videoRef.current.play().catch(() => {});
+    } else {
+      videoRef.current.pause();
+      videoRef.current.currentTime = 0;
+    }
+  }, [hovered]);
 
   const handleOpen = (e) => {
     if (isClickable) {
@@ -239,17 +247,31 @@ const CardProject = ({ Img, Title, Description, Link: ProjectLink, VideoFile, id
       
           <div className="relative p-5 z-10">
             <div className="relative overflow-hidden rounded-lg aspect-[4/5] bg-black">
-              {/* Static thumbnail */}
+              {/* Static thumbnail — tersembunyi saat video preview aktif */}
               <img
                 src={Img}
                 alt={Title}
-                className={`w-full h-full object-cover transition-all duration-500 ${
-                  previewPlayer ? 'opacity-0 scale-100' : 'group-hover:scale-105 opacity-100'
+                className={`w-full h-full object-cover transition-all duration-300 ${
+                  playPreview ? 'opacity-0' : 'group-hover:scale-105 opacity-100'
                 }`}
               />
-              {/* Preview video player (muted, looping, autoplay) */}
-              {previewPlayer && (
-                <div className="absolute inset-0 transition-opacity duration-500 opacity-100">
+              {/* Video preview langsung via ref (zero-delay, tanpa iframe) */}
+              {isVideo && VideoFile && (
+                <video
+                  ref={videoRef}
+                  src={VideoFile}
+                  muted
+                  loop
+                  playsInline
+                  preload="metadata"
+                  className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-300 ${
+                    hovered ? 'opacity-100' : 'opacity-0'
+                  }`}
+                />
+              )}
+              {/* Preview player untuk YouTube/Vimeo/MP4-link (hanya muncul saat tidak ada VideoFile) */}
+              {previewPlayer && !VideoFile && (
+                <div className="absolute inset-0 transition-opacity duration-300 opacity-100">
                   {previewPlayer}
                 </div>
               )}
