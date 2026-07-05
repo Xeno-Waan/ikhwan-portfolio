@@ -336,7 +336,49 @@ export default function FullWidthTabs() {
           }}
         >
           <TabPanel value={value} index={0} dir={theme.direction}>
-            {renderProjectGrid(getFilteredProjects(0))}
+            {projects.length === 0 ? (
+              <div className="text-center py-20 text-gray-500 font-light text-sm">
+                No projects in this category yet.
+              </div>
+            ) : (
+              <div className="space-y-16">
+                {/* Websites Section */}
+                {getFilteredProjects(1).length > 0 && (
+                  <div className="space-y-6">
+                    <div className="flex items-center gap-3 border-b border-white/5 pb-2">
+                      <span className="w-1.5 h-6 rounded-full bg-gradient-to-b from-[#bfa37a] to-[#dfcfb9]" />
+                      <h3 className="text-lg font-bold uppercase tracking-wider text-[#dfcfb9] font-serif">Websites</h3>
+                      <span className="text-xs text-gray-500 font-mono">({getFilteredProjects(1).length})</span>
+                    </div>
+                    {renderProjectGrid(getFilteredProjects(1))}
+                  </div>
+                )}
+
+                {/* Poster & Design Section */}
+                {getFilteredProjects(2).length > 0 && (
+                  <div className="space-y-6">
+                    <div className="flex items-center gap-3 border-b border-white/5 pb-2">
+                      <span className="w-1.5 h-6 rounded-full bg-gradient-to-b from-[#bfa37a] to-[#dfcfb9]" />
+                      <h3 className="text-lg font-bold uppercase tracking-wider text-[#dfcfb9] font-serif">Poster & Design</h3>
+                      <span className="text-xs text-gray-500 font-mono">({getFilteredProjects(2).length})</span>
+                    </div>
+                    {renderProjectGrid(getFilteredProjects(2))}
+                  </div>
+                )}
+
+                {/* Video & Medsos Section */}
+                {getFilteredProjects(3).length > 0 && (
+                  <div className="space-y-6">
+                    <div className="flex items-center gap-3 border-b border-white/5 pb-2">
+                      <span className="w-1.5 h-6 rounded-full bg-gradient-to-b from-[#bfa37a] to-[#dfcfb9]" />
+                      <h3 className="text-lg font-bold uppercase tracking-wider text-[#dfcfb9] font-serif">Video & Medsos</h3>
+                      <span className="text-xs text-gray-500 font-mono">({getFilteredProjects(3).length})</span>
+                    </div>
+                    {renderProjectGrid(getFilteredProjects(3))}
+                  </div>
+                )}
+              </div>
+            )}
           </TabPanel>
 
           <TabPanel value={value} index={1} dir={theme.direction}>
