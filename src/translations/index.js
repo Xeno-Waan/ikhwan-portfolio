@@ -3,6 +3,7 @@ const translations = {
     nav: {
       home: "Home",
       about: "About",
+      projects: "Projects",
       websites: "Websites",
       design: "Design",
       video: "Video",
@@ -94,6 +95,7 @@ const translations = {
     nav: {
       home: "Beranda",
       about: "Tentang",
+      projects: "Proyek",
       websites: "Website",
       design: "Desain",
       video: "Video",

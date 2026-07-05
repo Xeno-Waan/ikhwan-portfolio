@@ -15,22 +15,15 @@ const Navbar = () => {
     const navItems = [
         { path: "/", label: t.home },
         { path: "/about", label: t.about },
-        { path: "/projects?tab=websites", label: t.websites },
-        { path: "/projects?tab=design", label: t.design },
-        { path: "/projects?tab=video", label: t.video },
+        { path: "/projects", label: t.projects },
         { path: "/certificates", label: t.certificates },
         { path: "/contact", label: t.contact },
         { path: "/comments", label: t.comments },
     ];
 
     const isNavItemActive = (itemPath) => {
-        const currentFull = location.pathname + location.search;
         if (itemPath === "/") return activePath === "/";
-        if (itemPath.startsWith("/projects")) {
-            if (currentFull === itemPath) return true;
-            if (currentFull === "/projects" && itemPath === "/projects?tab=websites") return true;
-            return false;
-        }
+        if (itemPath === "/projects") return activePath === "/projects" || activePath.startsWith("/project");
         return activePath === itemPath;
     };
 
