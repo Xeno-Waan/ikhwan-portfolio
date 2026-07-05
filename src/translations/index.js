@@ -18,7 +18,7 @@ const translations = {
       ],
       description:
         "Informatics student passionate about building modern websites, crafting visual designs, and producing creative video content.",
-      techStack: ["Figma & Canva", "Premiere & After Effects"],
+      techStack: [],
       btnProjects: "Projects",
       btnContact: "Contact",
     },
@@ -107,7 +107,7 @@ const translations = {
       ],
       description:
         "Mahasiswa Informatika yang fokus pada pengembangan website modern, merancang desain visual, dan membuat konten video kreatif.",
-      techStack: ["Figma & Canva", "Premiere & After Effects"],
+      techStack: [],
       btnProjects: "Proyek",
       btnContact: "Kontak",
     },
