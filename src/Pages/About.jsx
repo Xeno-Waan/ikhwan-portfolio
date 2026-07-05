@@ -301,7 +301,7 @@ const AboutPage = () => {
               data-aos="fade-right"
               data-aos-duration="1500"
             >
-              Mahasiswa Teknik Informatika di STIKOM El Rahma, fokus pada pengembangan web modern dan clean code. Membangun aplikasi responsif yang berorientasi pada kenyamanan pengguna.
+              Mahasiswa Informatika yang fokus pada pengembangan website, serta aktif membuat desain visual dan video kreatif.
             </p>
 
             {/* Quote Section */}
