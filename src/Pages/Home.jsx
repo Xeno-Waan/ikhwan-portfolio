@@ -1,16 +1,17 @@
 import React, { useState, useEffect, useCallback, memo } from "react"
 import { Link } from "react-router-dom"
 import { Github, Linkedin, Mail, ExternalLink, Instagram, Sparkles } from "lucide-react"
+import { useLang } from "../LanguageContext"
 
 // Memoized Components
-const StatusBadge = memo(() => (
+const StatusBadge = memo(({ label }) => (
   <div className="inline-block animate-float lg:mx-0">
     <div className="relative group">
       <div className="absolute -inset-0.5 bg-gradient-to-r from-[#bfa37a] to-[#dfcfb9] rounded-full blur opacity-30 group-hover:opacity-50 transition duration-1000"></div>
       <div className="relative px-3 sm:px-4 py-1.5 rounded-full bg-black/40 backdrop-blur-xl border border-white/10">
         <span className="bg-gradient-to-r from-[#bfa37a] to-[#dfcfb9] text-transparent bg-clip-text sm:text-sm text-[0.7rem] font-medium flex items-center font-sans">
           <Sparkles className="sm:w-3.5 sm:h-3.5 w-3 h-3 mr-2 text-amber-400" />
-          Ready to Collaborate
+          {label}
         </span>
       </div>
     </div>
@@ -75,7 +76,6 @@ const SocialLink = memo(({ icon: Icon, link }) => (
 const TYPING_SPEED = 100;
 const ERASING_SPEED = 50;
 const PAUSE_DURATION = 2000;
-const WORDS = ["Informatics Student @ STIKOM El Rahma", "Web Developer", "UI/UX Designer", "Video Editor"];
 const TECH_STACK = ["Figma & Canva", "Premiere & After Effects"];
 const SOCIAL_LINKS = [
   { icon: Github, link: "https://github.com/Xeno-Waan" },
@@ -84,12 +84,23 @@ const SOCIAL_LINKS = [
 ];
 
 const Home = () => {
+  const { t } = useLang();
+  const WORDS = t.home.words;
+
   const [text, setText] = useState("")
   const [isTyping, setIsTyping] = useState(true)
   const [wordIndex, setWordIndex] = useState(0)
   const [charIndex, setCharIndex] = useState(0)
   const [isLoaded, setIsLoaded] = useState(false)
   const [isHovering, setIsHovering] = useState(false)
+
+  // Reset typing when language changes
+  useEffect(() => {
+    setText("");
+    setWordIndex(0);
+    setCharIndex(0);
+    setIsTyping(true);
+  }, [WORDS[0]]);
 
   useEffect(() => {
     setIsLoaded(true);
@@ -132,7 +143,7 @@ const Home = () => {
             {/* Left Column */}
             <div className="w-full lg:w-1/2 space-y-4 sm:space-y-5 text-left lg:text-left order-1 lg:order-1">
               <div className="space-y-3 sm:space-y-4">
-                <StatusBadge />
+                <StatusBadge label={t.home.badge} />
                 <MainTitle />
 
                 {/* Typing Effect */}
@@ -145,7 +156,7 @@ const Home = () => {
 
                 {/* Description */}
                 <p className="text-sm md:text-base text-gray-400 max-w-xl leading-relaxed font-light">
-                  Mahasiswa Informatika yang passionate dalam membangun sistem website, menciptakan desain visual yang menarik, serta menghasilkan konten video yang impactful.
+                  {t.home.description}
                 </p>
 
                 {/* Tech Stack */}
@@ -157,8 +168,8 @@ const Home = () => {
 
                 {/* CTA Buttons */}
                 <div className="flex flex-row gap-3 w-full justify-start">
-                  <CTAButton href="/projects" text="Projects" icon={ExternalLink} />
-                  <CTAButton href="/contact" text="Contact" icon={Mail} />
+                  <CTAButton href="/projects" text={t.home.viewProjects} icon={ExternalLink} />
+                  <CTAButton href="/contact" text={t.home.contact} icon={Mail} />
                 </div>
 
                 {/* Social Links */}
@@ -199,7 +210,7 @@ const Home = () => {
                   {/* Bottom overlay badge */}
                   <div className="absolute bottom-4 left-4 right-4 p-3 rounded-xl bg-black/70 backdrop-blur-md border border-white/10 transition-all duration-500 transform translate-y-2 group-hover:translate-y-0 opacity-0 group-hover:opacity-100">
                     <p className="text-white font-serif font-semibold text-sm sm:text-base">M. Ikhwan Manshur</p>
-                    <p className="text-xs text-gray-400 font-light">Web Dev · Design · Video Editing</p>
+                     <p className="text-xs text-gray-400 font-light">{t.home.subtitle}</p>
                   </div>
                 </div>
               </div>

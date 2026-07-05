@@ -14,6 +14,7 @@ import NotFoundPage from "./Pages/404";
 import Login from "./Pages/Login";
 import AdminDashboard from "./Pages/AdminDashboard";
 import ProtectedRoute from "./components/ProtectedRoute";
+import { LanguageProvider } from "./LanguageContext";
 import AOS from 'aos';
 import 'aos/dist/aos.css';
 
@@ -114,29 +115,31 @@ function App() {
   }, []);
 
   return (
-    <BrowserRouter>
-      <Routes>
-        {/* Full-page (landscape, no scroll, card frame) */}
-        <Route path="/" element={<PageLayout fullPage><Home /></PageLayout>} />
-        <Route path="/about" element={<PageLayout fullPage><About /></PageLayout>} />
-        <Route path="/contact" element={<PageLayout fullPage><ContactPage /></PageLayout>} />
+    <LanguageProvider>
+      <BrowserRouter>
+        <Routes>
+          {/* Full-page (landscape, no scroll, card frame) */}
+          <Route path="/" element={<PageLayout fullPage><Home /></PageLayout>} />
+          <Route path="/about" element={<PageLayout fullPage><About /></PageLayout>} />
+          <Route path="/contact" element={<PageLayout fullPage><ContactPage /></PageLayout>} />
 
-        {/* Scrollable pages */}
-        <Route path="/projects" element={<PageLayout><Portofolio /></PageLayout>} />
-        <Route path="/certificates" element={<PageLayout><Certificates /></PageLayout>} />
-        <Route path="/comments" element={<PageLayout><CommentsPage /></PageLayout>} />
-        <Route path="/project/:id" element={<PageLayout><ProjectDetails /></PageLayout>} />
+          {/* Scrollable pages */}
+          <Route path="/projects" element={<PageLayout><Portofolio /></PageLayout>} />
+          <Route path="/certificates" element={<PageLayout><Certificates /></PageLayout>} />
+          <Route path="/comments" element={<PageLayout><CommentsPage /></PageLayout>} />
+          <Route path="/project/:id" element={<PageLayout><ProjectDetails /></PageLayout>} />
 
-        {/* Auth & Admin (no layout wrapper) */}
-        <Route path="/login" element={<Login />} />
-        <Route path="/admin" element={
-          <ProtectedRoute>
-            <AdminDashboard />
-          </ProtectedRoute>
-        } />
-        <Route path="*" element={<PageLayout><NotFoundPage /></PageLayout>} />
-      </Routes>
-    </BrowserRouter>
+          {/* Auth & Admin (no layout wrapper) */}
+          <Route path="/login" element={<Login />} />
+          <Route path="/admin" element={
+            <ProtectedRoute>
+              <AdminDashboard />
+            </ProtectedRoute>
+          } />
+          <Route path="*" element={<PageLayout><NotFoundPage /></PageLayout>} />
+        </Routes>
+      </BrowserRouter>
+    </LanguageProvider>
   );
 }
 
