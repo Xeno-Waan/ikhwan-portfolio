@@ -172,6 +172,7 @@ const CardProject = ({ Img, Title, Description, Link: ProjectLink, VideoFile, id
 
   const isDesign = Category?.toLowerCase() === 'design';
   const isVideo = Category?.toLowerCase() === 'video';
+  const isWebsite = Category?.toLowerCase() === 'website';
   const isClickable = isDesign || isVideo;
 
   useEffect(() => {
@@ -246,7 +247,7 @@ const CardProject = ({ Img, Title, Description, Link: ProjectLink, VideoFile, id
           <div className="absolute inset-0 bg-gradient-to-br from-[#bfa37a]/5 via-transparent to-[#dfcfb9]/5 opacity-50 group-hover:opacity-70 transition-opacity duration-300"></div>
       
           <div className="relative p-5 z-10">
-            <div className="relative overflow-hidden rounded-lg aspect-[4/5] bg-black">
+            <div className={`relative overflow-hidden rounded-lg ${isWebsite ? 'aspect-video' : 'aspect-[4/5]'} bg-black`}>
               {/* Jika ada VideoFile: video IS the thumbnail (langsung putar saat hover) */}
               {isVideo && VideoFile ? (
                 <>

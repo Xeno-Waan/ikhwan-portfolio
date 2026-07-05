@@ -1,14 +1,7 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { supabase } from "../supabase"; 
-import PropTypes from "prop-types";
-import SwipeableViews from "react-swipeable-views";
 import { useTheme } from "@mui/material/styles";
 import useMediaQuery from "@mui/material/useMediaQuery";
-import AppBar from "@mui/material/AppBar";
-import Tabs from "@mui/material/Tabs";
-import Tab from "@mui/material/Tab";
-import Typography from "@mui/material/Typography";
-import Box from "@mui/material/Box";
 import CardProject from "../components/CardProject";
 import TechStackIcon from "../components/TechStackIcon";
 import Certificate from "../components/Certificate";
@@ -16,37 +9,6 @@ import { Code, Award, Boxes, Globe, Palette, Video } from "lucide-react";
 import { useLanguage } from "../context/LanguageContext";
 import translations from "../translations";
 import { useSearchParams } from "react-router-dom";
-
-function TabPanel({ children, value, index, ...other }) {
-  return (
-    <div
-      role="tabpanel"
-      hidden={value !== index}
-      id={`full-width-tabpanel-${index}`}
-      aria-labelledby={`full-width-tab-${index}`}
-      {...other}
-    >
-      {value === index && (
-        <Box sx={{ p: { xs: 1, sm: 3 } }}>
-          <Typography component="div">{children}</Typography>
-        </Box>
-      )}
-    </div>
-  );
-}
-
-TabPanel.propTypes = {
-  children: PropTypes.node,
-  index: PropTypes.number.isRequired,
-  value: PropTypes.number.isRequired,
-};
-
-function a11yProps(index) {
-  return {
-    id: `full-width-tab-${index}`,
-    "aria-controls": `full-width-tabpanel-${index}`,
-  };
-}
 
 const techStacks = [
   { icon: "html.svg", language: "HTML" },
@@ -130,10 +92,9 @@ export default function FullWidthTabs() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [value, setValue] = useState(() => {
     const tabParam = searchParams.get("tab");
-    if (tabParam === "websites") return 1;
-    if (tabParam === "design") return 2;
-    if (tabParam === "video") return 3;
-    return 0; // Default to 'All'
+    if (tabParam === "design") return 1;
+    if (tabParam === "video") return 2;
+    return 0; // Default to websites
   });
   const [projects, setProjects] = useState(defaultProjects);
   const { lang } = useLanguage();
@@ -142,14 +103,14 @@ export default function FullWidthTabs() {
   // Sync tab index state when URL query parameter changes
   useEffect(() => {
     const tabParam = searchParams.get("tab");
-    const tabNames = ["all", "websites", "design", "video"];
+    const tabNames = ["websites", "design", "video"];
     const index = tabNames.indexOf(tabParam);
     if (index !== -1 && index !== value) {
       setValue(index);
     } else if (!tabParam && value !== 0) {
       setValue(0);
     }
-  }, [searchParams]);
+  }, [searchParams, value]);
 
   const fetchData = useCallback(async () => {
     if (!supabase) {
@@ -196,25 +157,29 @@ export default function FullWidthTabs() {
     fetchData();
   }, [fetchData]);
 
-  const handleChange = (event, newValue) => {
+  const handleChange = (newValue) => {
     setValue(newValue);
-    const tabNames = ["all", "websites", "design", "video"];
+    const tabNames = ["websites", "design", "video"];
     setSearchParams({ tab: tabNames[newValue] }, { replace: true });
   };
 
   const getFilteredProjects = (tabValue) => {
-    if (tabValue === 0) return projects;
-    if (tabValue === 1) return projects.filter(p => p.Category?.toLowerCase() === "website");
-    if (tabValue === 2) return projects.filter(p => p.Category?.toLowerCase() === "design");
-    if (tabValue === 3) return projects.filter(p => p.Category?.toLowerCase() === "video");
+    if (tabValue === 0) return projects.filter(p => p.Category?.toLowerCase() === "website");
+    if (tabValue === 1) return projects.filter(p => p.Category?.toLowerCase() === "design");
+    if (tabValue === 2) return projects.filter(p => p.Category?.toLowerCase() === "video");
     return [];
   };
 
-  const renderProjectGrid = (filtered) => {
+  const getGridCols = (tabValue) => {
+    if (tabValue === 0) return "grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8"; // Websites: 3 columns (larger landscape cards)
+    return "grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6"; // Design & Video: 4 columns (portrait cards)
+  };
+
+  const renderProjectGrid = (filtered, tabValue) => {
     return (
       <div className="container mx-auto flex justify-center items-center overflow-hidden">
         {filtered.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 w-full">
+          <div className={`grid ${getGridCols(tabValue)} w-full`}>
             {filtered.map((project, index) => (
               <div
                 key={project.id || index}
@@ -242,10 +207,16 @@ export default function FullWidthTabs() {
     );
   };
 
+  const categories = [
+    { key: "websites", label: t.tabs.websites, icon: <Globe className="w-4 h-4" /> },
+    { key: "design", label: t.tabs.design, icon: <Palette className="w-4 h-4" /> },
+    { key: "video", label: t.tabs.video, icon: <Video className="w-4 h-4" /> }
+  ];
+
   return (
     <div className="md:px-[10%] px-[5%] w-full py-[6rem] bg-[#050507] overflow-hidden" id="Projects">
       {/* Header section */}
-      <div className="text-center pb-10" data-aos="fade-up" data-aos-duration="1000">
+      <div className="text-center pb-8" data-aos="fade-up" data-aos-duration="1000">
         <h2 className="inline-block text-3xl md:text-5xl font-bold text-center mx-auto text-transparent bg-clip-text bg-gradient-to-r from-white via-gray-100 to-[#dfcfb9] font-serif">
           <span style={{
             color: '#bfa37a',
@@ -257,151 +228,43 @@ export default function FullWidthTabs() {
             {t.title}
           </span>
         </h2>
-        <p className="text-slate-400 max-w-2xl mx-auto text-sm md:text-base mt-2">
+        <p className="text-slate-400 max-w-2xl mx-auto text-xs md:text-sm mt-2 font-light">
           {t.subtitle}
         </p>
       </div>
 
-      <Box sx={{ width: "100%" }}>
-        <AppBar
-          position="static"
-          elevation={0}
-          sx={{
-            bgcolor: "transparent",
-            border: "1px solid rgba(255, 255, 255, 0.1)",
-            borderRadius: "20px",
-            position: "relative",
-            overflow: "hidden",
-            "&::before": {
-              content: '""',
-              position: "absolute",
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              background: "linear-gradient(180deg, rgba(191, 163, 122, 0.03) 0%, rgba(223, 207, 185, 0.03) 100%)",
-              backdropFilter: "blur(10px)",
-              zIndex: 0,
-            },
-          }}
-          className="md:px-4"
-        >
-          <Tabs
-            value={value}
-            onChange={handleChange}
-            textColor="secondary"
-            indicatorColor="secondary"
-            variant={isMobile ? "scrollable" : "standard"}
-            scrollButtons={isMobile ? "auto" : false}
-            centered={!isMobile}
-            sx={{
-              minHeight: "70px",
-              "& .MuiTab-root": {
-                fontSize: { xs: "0.85rem", md: "0.95rem" },
-                fontWeight: "600",
-                color: "#94a3b8",
-                textTransform: "none",
-                transition: "all 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
-                padding: "20px 16px",
-                zIndex: 1,
-                margin: "8px 4px",
-                borderRadius: "12px",
-                "&:hover": {
-                  color: "#ffffff",
-                  backgroundColor: "rgba(191, 163, 122, 0.1)",
-                  transform: "translateY(-2px)",
-                  "& .lucide": {
-                    transform: "scale(1.1) rotate(5deg)",
-                  },
-                },
-                "&.Mui-selected": {
-                  color: "#fff",
-                  background: "linear-gradient(135deg, rgba(191, 163, 122, 0.2), rgba(223, 207, 185, 0.2))",
-                  boxShadow: "0 4px 15px -3px rgba(191, 163, 122, 0.2)",
-                  "& .lucide": {
-                    color: "#dfcfb9",
-                  },
-                },
-              },
-              "& .MuiTabs-indicator": {
-                height: 0,
-              },
-              "& .MuiTabs-flexContainer": {
-                gap: "4px",
-              },
-            }}
-          >
-            <Tab icon={<Boxes className="mb-2 w-5 h-5 transition-all duration-300" />} label={t.tabs.all} {...a11yProps(0)} />
-            <Tab icon={<Globe className="mb-2 w-5 h-5 transition-all duration-300" />} label={t.tabs.websites} {...a11yProps(1)} />
-            <Tab icon={<Palette className="mb-2 w-5 h-5 transition-all duration-300" />} label={t.tabs.design} {...a11yProps(2)} />
-            <Tab icon={<Video className="mb-2 w-5 h-5 transition-all duration-300" />} label={t.tabs.video} {...a11yProps(3)} />
-          </Tabs>
-        </AppBar>
-
-        <SwipeableViews
-          axis={theme.direction === "rtl" ? "x-reverse" : "x"}
-          index={value}
-          onChangeIndex={(val) => {
-            setValue(val);
-          }}
-        >
-          <TabPanel value={value} index={0} dir={theme.direction}>
-            {projects.length === 0 ? (
-              <div className="text-center py-20 text-gray-500 font-light text-sm">
-                No projects in this category yet.
-              </div>
-            ) : (
-              <div className="space-y-16">
-                {/* Websites Section */}
-                {getFilteredProjects(1).length > 0 && (
-                  <div className="space-y-6">
-                    <div className="flex items-center gap-3 border-b border-white/5 pb-2">
-                      <span className="w-1.5 h-6 rounded-full bg-gradient-to-b from-[#bfa37a] to-[#dfcfb9]" />
-                      <h3 className="text-lg font-bold uppercase tracking-wider text-[#dfcfb9] font-serif">{t.sections.websites}</h3>
-                      <span className="text-xs text-gray-500 font-mono">({getFilteredProjects(1).length})</span>
-                    </div>
-                    {renderProjectGrid(getFilteredProjects(1))}
-                  </div>
+      {/* Custom Pill Tabs */}
+      <div className="flex justify-center items-center mb-10" data-aos="fade-up" data-aos-duration="1100">
+        <div className="relative flex items-center bg-white/[0.03] border border-white/[0.08] rounded-2xl px-1.5 py-1.5 gap-1 backdrop-blur-md">
+          {categories.map((cat, idx) => {
+            const isActive = value === idx;
+            return (
+              <button
+                key={cat.key}
+                onClick={() => handleChange(idx)}
+                className={`relative px-4 py-2 rounded-xl text-xs font-semibold transition-all duration-300 flex items-center gap-2 whitespace-nowrap ${
+                  isActive
+                    ? "text-[#0a0a0c]"
+                    : "text-[#94a3b8] hover:text-white hover:bg-white/5"
+                }`}
+              >
+                {isActive && (
+                  <span className="absolute inset-0 rounded-xl bg-gradient-to-r from-[#bfa37a] to-[#dfcfb9] shadow-[0_2px_12px_rgba(191,163,122,0.4)]" />
                 )}
+                <span className="relative z-10 flex items-center gap-1.5">
+                  {cat.icon}
+                  {cat.label}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
 
-                {getFilteredProjects(2).length > 0 && (
-                  <div className="space-y-6">
-                    <div className="flex items-center gap-3 border-b border-white/5 pb-2">
-                      <span className="w-1.5 h-6 rounded-full bg-gradient-to-b from-[#bfa37a] to-[#dfcfb9]" />
-                      <h3 className="text-lg font-bold uppercase tracking-wider text-[#dfcfb9] font-serif">{t.sections.design}</h3>
-                      <span className="text-xs text-gray-500 font-mono">({getFilteredProjects(2).length})</span>
-                    </div>
-                    {renderProjectGrid(getFilteredProjects(2))}
-                  </div>
-                )}
-
-                {getFilteredProjects(3).length > 0 && (
-                  <div className="space-y-6">
-                    <div className="flex items-center gap-3 border-b border-white/5 pb-2">
-                      <span className="w-1.5 h-6 rounded-full bg-gradient-to-b from-[#bfa37a] to-[#dfcfb9]" />
-                      <h3 className="text-lg font-bold uppercase tracking-wider text-[#dfcfb9] font-serif">{t.sections.video}</h3>
-                      <span className="text-xs text-gray-500 font-mono">({getFilteredProjects(3).length})</span>
-                    </div>
-                    {renderProjectGrid(getFilteredProjects(3))}
-                  </div>
-                )}
-              </div>
-            )}
-          </TabPanel>
-
-          <TabPanel value={value} index={1} dir={theme.direction}>
-            {renderProjectGrid(getFilteredProjects(1))}
-          </TabPanel>
-
-          <TabPanel value={value} index={2} dir={theme.direction}>
-            {renderProjectGrid(getFilteredProjects(2))}
-          </TabPanel>
-
-          <TabPanel value={value} index={3} dir={theme.direction}>
-            {renderProjectGrid(getFilteredProjects(3))}
-          </TabPanel>
-        </SwipeableViews>
-      </Box>
+      {/* Grid Container */}
+      <div className="transition-all duration-500 transform opacity-100">
+        {renderProjectGrid(getFilteredProjects(value), value)}
+      </div>
     </div>
   );
 }
