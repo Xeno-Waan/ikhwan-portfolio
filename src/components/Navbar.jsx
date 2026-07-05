@@ -15,11 +15,24 @@ const Navbar = () => {
     const navItems = [
         { path: "/", label: t.home },
         { path: "/about", label: t.about },
-        { path: "/projects", label: t.projects },
+        { path: "/projects?tab=websites", label: t.websites },
+        { path: "/projects?tab=design", label: t.design },
+        { path: "/projects?tab=video", label: t.video },
         { path: "/certificates", label: t.certificates },
         { path: "/contact", label: t.contact },
         { path: "/comments", label: t.comments },
     ];
+
+    const isNavItemActive = (itemPath) => {
+        const currentFull = location.pathname + location.search;
+        if (itemPath === "/") return activePath === "/";
+        if (itemPath.startsWith("/projects")) {
+            if (currentFull === itemPath) return true;
+            if (currentFull === "/projects" && itemPath === "/projects?tab=websites") return true;
+            return false;
+        }
+        return activePath === itemPath;
+    };
 
     useEffect(() => {
         const handleScroll = () => {
@@ -67,7 +80,7 @@ const Navbar = () => {
                         {/* Tab Container */}
                         <div className="relative flex items-center bg-white/[0.03] border border-white/[0.08] rounded-2xl px-1.5 py-1.5 gap-0.5 backdrop-blur-md">
                             {navItems.map((item) => {
-                                const isActive = activePath === item.path;
+                                const isActive = isNavItemActive(item.path);
                                 return (
                                     <Link
                                         key={item.path}
@@ -136,25 +149,28 @@ const Navbar = () => {
                 }`}
             >
                 <div className="px-4 py-4 space-y-1">
-                    {navItems.map((item, index) => (
-                        <Link
-                            key={item.path}
-                            to={item.path}
-                            onClick={() => setIsOpen(false)}
-                            className={`block px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-300 ease ${
-                                activePath === item.path
-                                    ? "bg-gradient-to-r from-[#bfa37a]/20 to-[#dfcfb9]/20 text-[#dfcfb9] border border-[#bfa37a]/20"
-                                    : "text-[#94a3b8] hover:text-white hover:bg-white/5"
-                            }`}
-                            style={{
-                                transitionDelay: `${index * 50}ms`,
-                                transform: isOpen ? "translateX(0)" : "translateX(30px)",
-                                opacity: isOpen ? 1 : 0,
-                            }}
-                        >
-                            {item.label}
-                        </Link>
-                    ))}
+                    {navItems.map((item, index) => {
+                        const isActive = isNavItemActive(item.path);
+                        return (
+                            <Link
+                                key={item.path}
+                                to={item.path}
+                                onClick={() => setIsOpen(false)}
+                                className={`block px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-300 ease ${
+                                    isActive
+                                        ? "bg-gradient-to-r from-[#bfa37a]/20 to-[#dfcfb9]/20 text-[#dfcfb9] border border-[#bfa37a]/20"
+                                        : "text-[#94a3b8] hover:text-white hover:bg-white/5"
+                                }`}
+                                style={{
+                                    transitionDelay: `${index * 50}ms`,
+                                    transform: isOpen ? "translateX(0)" : "translateX(30px)",
+                                    opacity: isOpen ? 1 : 0,
+                                }}
+                            >
+                                {item.label}
+                            </Link>
+                        );
+                    })}
                 </div>
             </div>
         </nav>

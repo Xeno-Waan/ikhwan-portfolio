@@ -15,6 +15,7 @@ import Certificate from "../components/Certificate";
 import { Code, Award, Boxes, Globe, Palette, Video } from "lucide-react";
 import { useLanguage } from "../context/LanguageContext";
 import translations from "../translations";
+import { useSearchParams } from "react-router-dom";
 
 function TabPanel({ children, value, index, ...other }) {
   return (
@@ -126,10 +127,29 @@ const defaultCertificates = [
 export default function FullWidthTabs() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
-  const [value, setValue] = useState(0);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [value, setValue] = useState(() => {
+    const tabParam = searchParams.get("tab");
+    if (tabParam === "websites") return 1;
+    if (tabParam === "design") return 2;
+    if (tabParam === "video") return 3;
+    return 0; // Default to 'All'
+  });
   const [projects, setProjects] = useState(defaultProjects);
   const { lang } = useLanguage();
   const t = translations[lang].projects;
+
+  // Sync tab index state when URL query parameter changes
+  useEffect(() => {
+    const tabParam = searchParams.get("tab");
+    const tabNames = ["all", "websites", "design", "video"];
+    const index = tabNames.indexOf(tabParam);
+    if (index !== -1 && index !== value) {
+      setValue(index);
+    } else if (!tabParam && value !== 0) {
+      setValue(0);
+    }
+  }, [searchParams]);
 
   const fetchData = useCallback(async () => {
     if (!supabase) {
@@ -178,6 +198,8 @@ export default function FullWidthTabs() {
 
   const handleChange = (event, newValue) => {
     setValue(newValue);
+    const tabNames = ["all", "websites", "design", "video"];
+    setSearchParams({ tab: tabNames[newValue] }, { replace: true });
   };
 
   const getFilteredProjects = (tabValue) => {
