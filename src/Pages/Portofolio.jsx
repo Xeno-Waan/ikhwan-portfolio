@@ -207,12 +207,6 @@ export default function FullWidthTabs() {
     );
   };
 
-  const categories = [
-    { key: "websites", label: t.tabs.websites, icon: <Globe className="w-4 h-4" /> },
-    { key: "design", label: t.tabs.design, icon: <Palette className="w-4 h-4" /> },
-    { key: "video", label: t.tabs.video, icon: <Video className="w-4 h-4" /> }
-  ];
-
   return (
     <div className="md:px-[10%] px-[5%] w-full py-[6rem] bg-[#050507] overflow-hidden" id="Projects">
       {/* Header section */}
@@ -231,34 +225,6 @@ export default function FullWidthTabs() {
         <p className="text-slate-400 max-w-2xl mx-auto text-xs md:text-sm mt-2 font-light">
           {t.subtitle}
         </p>
-      </div>
-
-      {/* Custom Pill Tabs */}
-      <div className="flex justify-center items-center mb-10" data-aos="fade-up" data-aos-duration="1100">
-        <div className="relative flex items-center bg-white/[0.03] border border-white/[0.08] rounded-2xl px-1.5 py-1.5 gap-1 backdrop-blur-md">
-          {categories.map((cat, idx) => {
-            const isActive = value === idx;
-            return (
-              <button
-                key={cat.key}
-                onClick={() => handleChange(idx)}
-                className={`relative px-4 py-2 rounded-xl text-xs font-semibold transition-all duration-300 flex items-center gap-2 whitespace-nowrap ${
-                  isActive
-                    ? "text-[#0a0a0c]"
-                    : "text-[#94a3b8] hover:text-white hover:bg-white/5"
-                }`}
-              >
-                {isActive && (
-                  <span className="absolute inset-0 rounded-xl bg-gradient-to-r from-[#bfa37a] to-[#dfcfb9] shadow-[0_2px_12px_rgba(191,163,122,0.4)]" />
-                )}
-                <span className="relative z-10 flex items-center gap-1.5">
-                  {cat.icon}
-                  {cat.label}
-                </span>
-              </button>
-            );
-          })}
-        </div>
       </div>
 
       {/* Grid Container */}
