@@ -317,7 +317,7 @@ const AboutPage = () => {
             </div>
 
             <div className="flex flex-row items-center lg:items-start gap-3 w-full">
-              <a href="https://drive.google.com/drive/folders/1BOm51Grsabb3zj6Xk27K-iRwI1zITcpo" target="_blank" rel="noopener noreferrer">
+              <a href="https://canva.link/b98j7u5k1yyue2r" target="_blank" rel="noopener noreferrer">
                 <button 
                   data-aos="fade-up"
                   data-aos-duration="800"
