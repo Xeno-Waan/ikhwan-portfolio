@@ -209,23 +209,7 @@ export default function FullWidthTabs() {
 
   return (
     <div className="md:px-[10%] px-[5%] w-full py-[6rem] bg-[#050507] overflow-hidden" id="Projects">
-      {/* Header section */}
-      <div className="text-center pb-8" data-aos="fade-up" data-aos-duration="1000">
-        <h2 className="inline-block text-3xl md:text-5xl font-bold text-center mx-auto text-transparent bg-clip-text bg-gradient-to-r from-white via-gray-100 to-[#dfcfb9] font-serif">
-          <span style={{
-            color: '#bfa37a',
-            backgroundImage: 'linear-gradient(45deg, #bfa37a 10%, #dfcfb9 93%)',
-            WebkitBackgroundClip: 'text',
-            backgroundClip: 'text',
-            WebkitTextFillColor: 'transparent'
-          }}>
-            {t.title}
-          </span>
-        </h2>
-        <p className="text-slate-400 max-w-2xl mx-auto text-xs md:text-sm mt-2 font-light">
-          {t.subtitle}
-        </p>
-      </div>
+
 
       {/* Category Pill Tabs */}
       <div className="flex justify-center items-center mb-10" data-aos="fade-up" data-aos-duration="1100">
