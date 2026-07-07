@@ -155,6 +155,9 @@ const AboutPage = () => {
   const [experienceStartDate, setExperienceStartDate] = useState(() => {
     return localStorage.getItem("experienceStartDate") || "2021-11-06";
   });
+  const [cvFileUrl, setCvFileUrl] = useState(() => {
+    return localStorage.getItem("cvFileUrl") || "/CV.pdf";
+  });
 
   const fetchData = useCallback(async () => {
     if (!supabase) return;
@@ -172,6 +175,13 @@ const AboutPage = () => {
         if (settingRecord) {
           setExperienceStartDate(settingRecord.Description);
           localStorage.setItem("experienceStartDate", settingRecord.Description);
+        }
+
+        // Find CV file setting record
+        const cvRecord = rawProjects.find(p => p.Category === "setting" && p.Title === "cv_file_url");
+        if (cvRecord) {
+          setCvFileUrl(cvRecord.Description);
+          localStorage.setItem("cvFileUrl", cvRecord.Description);
         }
 
         // Filter projects
@@ -326,7 +336,7 @@ const AboutPage = () => {
             </div>
 
             <div className="flex flex-row items-center lg:items-start gap-3 w-full">
-              <a href="/CV.pdf" download="CV_Muhammad_Ikhwan.pdf">
+              <a href={cvFileUrl} download="CV_Muhammad_Ikhwan.pdf" target="_blank" rel="noopener noreferrer">
                 <button 
                   data-aos="fade-up"
                   data-aos-duration="800"

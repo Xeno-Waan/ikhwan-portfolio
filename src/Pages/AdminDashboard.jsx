@@ -29,6 +29,7 @@ import {
   Github,
   Download,
   Camera,
+  FileText,
 } from "lucide-react";
 import Swal from "sweetalert2";
 
@@ -142,6 +143,9 @@ const AdminDashboard = () => {
   // Settings state
   const [experienceSetting, setExperienceSetting] = useState(null);
   const [experienceValue, setExperienceValue] = useState("2021-11-06");
+  const [cvSetting, setCvSetting] = useState(null);
+  const [cvValue, setCvValue] = useState("");
+  const [cvUploadFile, setCvUploadFile] = useState(null);
 
   // Modal state
   const [showProjectModal, setShowProjectModal] = useState(false);
@@ -186,11 +190,13 @@ const AdminDashboard = () => {
       const allProjects = projRes.data || [];
       const filteredProjects = allProjects.filter(p => p.Category !== "setting");
       const settingProj = allProjects.find(p => p.Category === "setting" && p.Title === "experience_start_date");
+      const cvProj = allProjects.find(p => p.Category === "setting" && p.Title === "cv_file_url");
 
       setProjects(filteredProjects);
       setCertificates(certRes.data || []);
       setComments(commRes.data || []);
       if (settingProj) { setExperienceSetting(settingProj); setExperienceValue(settingProj.Description); }
+      if (cvProj) { setCvSetting(cvProj); setCvValue(cvProj.Description); }
     } catch (error) {
       Swal.fire({ icon: "error", title: "Load Failed", text: error.message, background: "#0a0a0c", color: "#fff", confirmButtonColor: "#bfa37a" });
     } finally {
@@ -637,6 +643,101 @@ const AdminDashboard = () => {
     }
   };
 
+  const saveCvSetting = async (file) => {
+    if (!file) return;
+    setLoading(true);
+    try {
+      const publicUrl = await uploadToStorage(file);
+      if (!publicUrl) return;
+      
+      const payload = { 
+        Title: "cv_file_url", 
+        Description: publicUrl, 
+        Category: "setting", 
+        Img: "https://placehold.co/600x400", 
+        Link: "", 
+        Github: "Private", 
+        Features: [], 
+        TechStack: [] 
+      };
+      
+      if (cvSetting?.id) {
+        const { error } = await supabase.from("projects").update(payload).eq("id", cvSetting.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from("projects").insert([payload]);
+        if (error) throw error;
+      }
+      
+      Swal.fire({ 
+        icon: "success", 
+        title: "CV Berhasil Diunggah & Disimpan", 
+        timer: 1500, 
+        showConfirmButton: false, 
+        background: "#0a0a0c", 
+        color: "#fff" 
+      });
+      
+      setCvUploadFile(null);
+      loadAllData();
+    } catch (error) {
+      Swal.fire({ 
+        icon: "error", 
+        title: "Gagal", 
+        text: error.message, 
+        background: "#0a0a0c", 
+        color: "#fff" 
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const saveCvManualSetting = async (urlVal) => {
+    setLoading(true);
+    try {
+      const payload = { 
+        Title: "cv_file_url", 
+        Description: urlVal, 
+        Category: "setting", 
+        Img: "https://placehold.co/600x400", 
+        Link: "", 
+        Github: "Private", 
+        Features: [], 
+        TechStack: [] 
+      };
+      
+      if (cvSetting?.id) {
+        const { error } = await supabase.from("projects").update(payload).eq("id", cvSetting.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from("projects").insert([payload]);
+        if (error) throw error;
+      }
+      
+      Swal.fire({ 
+        icon: "success", 
+        title: "Link CV Berhasil Disimpan", 
+        timer: 1500, 
+        showConfirmButton: false, 
+        background: "#0a0a0c", 
+        color: "#fff" 
+      });
+      
+      loadAllData();
+    } catch (error) {
+      Swal.fire({ 
+        icon: "error", 
+        title: "Gagal", 
+        text: error.message, 
+        background: "#0a0a0c", 
+        color: "#fff" 
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // ─── Computed filtered projects ──────────────────────────────────────────────
   const filteredProjects = filterCat === "all" ? projects : projects.filter(p => p.Category?.toLowerCase() === filterCat);
 
@@ -1060,44 +1161,112 @@ const AdminDashboard = () => {
               <h2 className="text-2xl font-bold font-serif">Pengaturan</h2>
               <p className="text-gray-400 text-sm mt-0.5">Konfigurasi tampilan portfolio kamu.</p>
             </div>
-            <div className="max-w-xl rounded-2xl border border-white/10 bg-black/40 p-6 backdrop-blur-md">
-              <h3 className="text-lg font-bold font-serif mb-1 text-[#dfcfb9]">Tahun Pengalaman</h3>
-              <p className="text-gray-400 text-sm mb-5 leading-relaxed">
-                Atur tanggal mulai pengalaman kamu. Sistem akan menghitung otomatis jumlah tahun yang ditampilkan. Kamu juga bisa tulis angka langsung (misal "5").
-              </p>
-              <div className="space-y-4">
-                <Field label="Tanggal Mulai / Angka" icon={Settings}>
-                  <input
-                    type="text"
-                    value={experienceValue}
-                    onChange={(e) => setExperienceValue(e.target.value)}
-                    placeholder="YYYY-MM-DD atau angka (misal 2021-11-06 atau 5)"
-                    className={inputCls}
-                  />
-                </Field>
-                <div className="p-4 rounded-xl bg-white/5 border border-white/5">
-                  <span className="text-[10px] text-gray-500 uppercase tracking-wider block font-semibold mb-1">Preview di Site</span>
-                  <span className="text-base font-serif font-bold text-white">
-                    {(() => {
-                      const num = parseInt(experienceValue, 10);
-                      if (!isNaN(num) && num.toString() === experienceValue?.toString().trim()) return `${num} Tahun Pengalaman`;
-                      const date = new Date(experienceValue);
-                      if (!isNaN(date.getTime())) {
-                        const today = new Date();
-                        const computed = today.getFullYear() - date.getFullYear() - (today < new Date(today.getFullYear(), date.getMonth(), date.getDate()) ? 1 : 0);
-                        return `${computed} Tahun Pengalaman (Kalkulasi)`;
-                      }
-                      return "Input tidak valid (fallback ke 4 Tahun)";
-                    })()}
-                  </span>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Card 1: Tahun Pengalaman */}
+              <div className="rounded-2xl border border-white/10 bg-black/40 p-6 backdrop-blur-md flex flex-col justify-between">
+                <div>
+                  <h3 className="text-lg font-bold font-serif mb-1 text-[#dfcfb9]">Tahun Pengalaman</h3>
+                  <p className="text-gray-400 text-sm mb-5 leading-relaxed">
+                    Atur tanggal mulai pengalaman kamu. Sistem akan menghitung otomatis jumlah tahun yang ditampilkan. Kamu juga bisa tulis angka langsung (misal "5").
+                  </p>
+                  <div className="space-y-4">
+                    <Field label="Tanggal Mulai / Angka" icon={Settings}>
+                      <input
+                        type="text"
+                        value={experienceValue}
+                        onChange={(e) => setExperienceValue(e.target.value)}
+                        placeholder="YYYY-MM-DD atau angka (misal 2021-11-06 atau 5)"
+                        className={inputCls}
+                      />
+                    </Field>
+                    <div className="p-4 rounded-xl bg-white/5 border border-white/5">
+                      <span className="text-[10px] text-gray-500 uppercase tracking-wider block font-semibold mb-1">Preview di Site</span>
+                      <span className="text-base font-serif font-bold text-white">
+                        {(() => {
+                          const num = parseInt(experienceValue, 10);
+                          if (!isNaN(num) && num.toString() === experienceValue?.toString().trim()) return `${num} Tahun Pengalaman`;
+                          const date = new Date(experienceValue);
+                          if (!isNaN(date.getTime())) {
+                            const today = new Date();
+                            const computed = today.getFullYear() - date.getFullYear() - (today < new Date(today.getFullYear(), date.getMonth(), date.getDate()) ? 1 : 0);
+                            return `${computed} Tahun Pengalaman (Kalkulasi)`;
+                          }
+                          return "Input tidak valid (fallback ke 4 Tahun)";
+                        })()}
+                      </span>
+                    </div>
+                  </div>
                 </div>
                 <button
                   onClick={() => saveExperienceSetting(experienceValue)}
                   disabled={loading}
-                  className="w-full flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#bfa37a] to-[#dfcfb9] text-black font-semibold text-sm hover:opacity-90 transition disabled:opacity-50"
+                  className="w-full mt-6 flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#bfa37a] to-[#dfcfb9] text-black font-semibold text-sm hover:opacity-90 transition disabled:opacity-50"
                 >
                   {loading ? "Menyimpan..." : "Simpan Pengaturan"}
                 </button>
+              </div>
+
+              {/* Card 2: CV PDF Upload */}
+              <div className="rounded-2xl border border-white/10 bg-black/40 p-6 backdrop-blur-md flex flex-col justify-between">
+                <div>
+                  <h3 className="text-lg font-bold font-serif mb-1 text-[#dfcfb9]">Curriculum Vitae (CV)</h3>
+                  <p className="text-gray-400 text-xs mb-5 leading-relaxed">
+                    Upload file CV (PDF) untuk tombol "Unduh CV" di halaman About. Bisa upload file baru atau input URL manual.
+                  </p>
+                  <div className="space-y-4">
+                    <div>
+                      <p className="text-[10px] text-gray-500 mb-1.5 uppercase tracking-wider font-semibold">Opsi 1: Upload PDF Baru</p>
+                      <UploadZone
+                        uploadFile={cvUploadFile}
+                        setUploadFile={setCvUploadFile}
+                        uploadingFile={uploadingFile}
+                        accept="application/pdf"
+                        label="File CV (PDF)"
+                      />
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-gray-500 mb-1.5 uppercase tracking-wider font-semibold">Opsi 2: URL CV Manual</p>
+                      <div className="relative">
+                        <FileText className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none" />
+                        <input
+                          type="text"
+                          value={cvValue}
+                          onChange={(e) => setCvValue(e.target.value)}
+                          placeholder="https://... atau path file CV"
+                          className={`${inputCls} pl-10`}
+                          disabled={!!cvUploadFile}
+                        />
+                      </div>
+                      {cvUploadFile && <p className="text-[10px] text-amber-400 mt-1">File dipilih — kolom URL dikunci.</p>}
+                    </div>
+                  </div>
+                </div>
+                <div className="mt-6 space-y-2">
+                  {cvValue && (
+                    <div className="p-3 rounded-xl bg-white/5 border border-white/5 flex items-center justify-between gap-2">
+                      <div className="min-w-0 flex-1">
+                        <span className="text-[9px] text-gray-500 uppercase tracking-wider block font-semibold">CV Terpasang</span>
+                        <a href={cvValue} target="_blank" rel="noopener noreferrer" className="text-xs text-[#dfcfb9] hover:underline truncate block">
+                          {cvValue}
+                        </a>
+                      </div>
+                      <FileText className="w-5 h-5 text-emerald-400 flex-shrink-0" />
+                    </div>
+                  )}
+                  <button
+                    onClick={async () => {
+                      if (cvUploadFile) {
+                        await saveCvSetting(cvUploadFile);
+                      } else {
+                        await saveCvManualSetting(cvValue);
+                      }
+                    }}
+                    disabled={loading || uploadingFile || (!cvUploadFile && !cvValue)}
+                    className="w-full flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#bfa37a] to-[#dfcfb9] text-black font-semibold text-sm hover:opacity-90 transition disabled:opacity-50"
+                  >
+                    {loading || uploadingFile ? "Menyimpan..." : "Simpan CV"}
+                  </button>
+                </div>
               </div>
             </div>
           </>
