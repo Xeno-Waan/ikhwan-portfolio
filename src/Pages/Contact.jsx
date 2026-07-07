@@ -40,7 +40,7 @@ const ContactPage = () => {
     });
 
     try {
-      const formSubmitUrl = 'https://formsubmit.co/ekizulfarrachman@gmail.com';
+      const formSubmitUrl = 'https://formsubmit.co/ikhwanmanshur@gmail.com';
       const submitData = new FormData();
       submitData.append('name', formData.name);
       submitData.append('email', formData.email);
@@ -205,7 +205,7 @@ const ContactPage = () => {
                 </div>
                 <div>
                   <p className="text-[10px] text-gray-500 uppercase tracking-wider">Email</p>
-                  <p className="text-sm text-gray-200 font-light">ekizulfarrachman@gmail.com</p>
+                  <p className="text-sm text-gray-200 font-light">ikhwanmanshur@gmail.com</p>
                 </div>
               </div>
               <div className="flex items-center gap-3 p-3 rounded-xl bg-white/[0.03] border border-white/[0.05]">
