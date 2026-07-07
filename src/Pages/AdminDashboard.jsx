@@ -1335,7 +1335,7 @@ const AdminDashboard = () => {
               {currentProject.Category !== "video" && (
                 <div className="border-t border-white/[0.07] pt-4 space-y-3">
                   <p className="text-[11px] font-semibold text-gray-300 uppercase tracking-wider">
-                    {currentProject.Category === "design" ? "File Gambar / Poster" : "Screenshot / Preview"}
+                    {currentProject.Category === "design" ? "File Gambar / Poster" : currentProject.Category === "photography" ? "Karya Foto" : "Screenshot / Preview"}
                   </p>
 
                   <div>
@@ -1345,7 +1345,7 @@ const AdminDashboard = () => {
                       setUploadFile={setUploadFile}
                       uploadingFile={uploadingFile}
                       accept="image/*"
-                      label={currentProject.Category === "design" ? "Poster/Gambar" : "Thumbnail"}
+                      label={currentProject.Category === "design" ? "Poster/Gambar" : currentProject.Category === "photography" ? "Foto" : "Thumbnail"}
                     />
                   </div>
 
