@@ -94,6 +94,7 @@ export default function FullWidthTabs() {
     const tabParam = searchParams.get("tab");
     if (tabParam === "design") return 1;
     if (tabParam === "video") return 2;
+    if (tabParam === "photography") return 3;
     return 0; // Default to websites
   });
   const [projects, setProjects] = useState(defaultProjects);
@@ -103,7 +104,7 @@ export default function FullWidthTabs() {
   // Sync tab index state when URL query parameter changes
   useEffect(() => {
     const tabParam = searchParams.get("tab");
-    const tabNames = ["websites", "design", "video"];
+    const tabNames = ["websites", "design", "video", "photography"];
     const index = tabNames.indexOf(tabParam);
     if (index !== -1 && index !== value) {
       setValue(index);
@@ -159,7 +160,7 @@ export default function FullWidthTabs() {
 
   const handleChange = (newValue) => {
     setValue(newValue);
-    const tabNames = ["websites", "design", "video"];
+    const tabNames = ["websites", "design", "video", "photography"];
     setSearchParams({ tab: tabNames[newValue] }, { replace: true });
   };
 
@@ -167,6 +168,7 @@ export default function FullWidthTabs() {
     if (tabValue === 0) return projects.filter(p => p.Category?.toLowerCase() === "website");
     if (tabValue === 1) return projects.filter(p => p.Category?.toLowerCase() === "design");
     if (tabValue === 2) return projects.filter(p => p.Category?.toLowerCase() === "video");
+    if (tabValue === 3) return projects.filter(p => p.Category?.toLowerCase() === "photography");
     return [];
   };
 
@@ -194,6 +196,7 @@ export default function FullWidthTabs() {
                   VideoFile={project.VideoFile}
                   id={project.id}
                   Category={project.Category}
+                  TechStack={project.TechStack}
                 />
               </div>
             ))}

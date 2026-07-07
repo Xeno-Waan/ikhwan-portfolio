@@ -164,7 +164,7 @@ const renderPreviewPlayer = (videoFile, url, title) => {
   return null;
 };
 
-const CardProject = ({ Img, Title, Description, Link: ProjectLink, VideoFile, id, Category }) => {
+const CardProject = ({ Img, Title, Description, Link: ProjectLink, VideoFile, id, Category, TechStack }) => {
   const [open, setOpen] = useState(false);
   const [hovered, setHovered] = useState(false);
   const [playPreview, setPlayPreview] = useState(false);
@@ -173,7 +173,8 @@ const CardProject = ({ Img, Title, Description, Link: ProjectLink, VideoFile, id
   const isDesign = Category?.toLowerCase() === 'design';
   const isVideo = Category?.toLowerCase() === 'video';
   const isWebsite = Category?.toLowerCase() === 'website';
-  const isClickable = isDesign || isVideo;
+  const isPhotography = Category?.toLowerCase() === 'photography';
+  const isClickable = isDesign || isVideo || isPhotography;
 
   useEffect(() => {
     if (hovered && isVideo) {
@@ -289,8 +290,8 @@ const CardProject = ({ Img, Title, Description, Link: ProjectLink, VideoFile, id
                   <Play className="w-10 h-10 text-white/20" />
                 </div>
               )}
-              {/* Overlay: Design — Eye icon on hover */}
-              {isDesign && (
+              {/* Overlay: Design & Photography — Eye icon on hover */}
+              {(isDesign || isPhotography) && (
                 <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                   <div className="p-3 rounded-full bg-white/10 backdrop-blur-md border border-white/20">
                     <Eye className="w-6 h-6 text-[#dfcfb9]" />
@@ -320,7 +321,7 @@ const CardProject = ({ Img, Title, Description, Link: ProjectLink, VideoFile, id
               )}
             </div>
             
-            {!isDesign && (
+            {(!isDesign && !isPhotography) && (
               <div className="mt-4 space-y-3">
                 <h3 className="text-xl font-semibold bg-gradient-to-r from-white to-[#dfcfb9] bg-clip-text text-transparent font-serif">
                   {Title}
@@ -383,8 +384,8 @@ const CardProject = ({ Img, Title, Description, Link: ProjectLink, VideoFile, id
         </div>
       </div>
 
-      {/* Fullscreen Modal for Designs */}
-      {isDesign && (
+      {/* Fullscreen Modal for Designs & Photography */}
+      {(isDesign || isPhotography) && (
         <Modal 
           open={open} 
           onClose={handleClose} 
@@ -428,7 +429,7 @@ const CardProject = ({ Img, Title, Description, Link: ProjectLink, VideoFile, id
               style={{ 
                 width: "100%", 
                 height: "auto",
-                maxHeight: "80vh",
+                maxHeight: "75vh",
                 objectFit: "contain",
                 borderRadius: "12px",
                 border: "1px solid rgba(255, 255, 255, 0.1)"
@@ -447,6 +448,20 @@ const CardProject = ({ Img, Title, Description, Link: ProjectLink, VideoFile, id
             >
               {Title}
             </Typography>
+            {Description && (
+              <p className="text-gray-400 text-xs text-center mt-1 max-w-md leading-relaxed">
+                {Description}
+              </p>
+            )}
+            {TechStack && TechStack.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 justify-center mt-2.5 max-w-md">
+                {TechStack.map((tech, idx) => (
+                  <span key={idx} className="text-[10px] text-gray-400 bg-white/5 border border-white/10 px-2 py-0.5 rounded-full font-light">
+                    {tech}
+                  </span>
+                ))}
+              </div>
+            )}
             {ProjectLink && (
               <a 
                 href={ProjectLink} 
@@ -454,7 +469,7 @@ const CardProject = ({ Img, Title, Description, Link: ProjectLink, VideoFile, id
                 rel="noopener noreferrer" 
                 className="mt-4 inline-flex items-center space-x-2 px-5 py-2.5 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 text-[#dfcfb9] hover:text-white text-sm font-semibold transition"
               >
-                <span>Lihat Project Lengkap ({platform?.name || "External Link"})</span>
+                <span>{isPhotography ? "Lihat Foto Asli" : "Lihat Project Lengkap"} ({platform?.name || "External Link"})</span>
                 <ExternalLink className="w-4 h-4" />
               </a>
             )}

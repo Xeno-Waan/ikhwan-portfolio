@@ -1,6 +1,6 @@
 import React, { useEffect, useState, memo, useMemo, useCallback } from "react"
 import { Link } from "react-router-dom"
-import { FileText, Code, Award, Globe, ArrowUpRight, Sparkles, UserCheck, Video, Palette } from "lucide-react"
+import { FileText, Code, Award, Globe, ArrowUpRight, Sparkles, UserCheck, Video, Palette, Camera } from "lucide-react"
 import { supabase } from "../supabase"
 import { useLanguage } from "../context/LanguageContext"
 import translations from "../translations"
@@ -205,6 +205,7 @@ const AboutPage = () => {
     const websiteProjects = projects.filter(p => p.Category?.toLowerCase() === "website").length;
     const designProjects = projects.filter(p => p.Category?.toLowerCase() === "design").length;
     const videoProjects = projects.filter(p => p.Category?.toLowerCase() === "video").length;
+    const photographyProjects = projects.filter(p => p.Category?.toLowerCase() === "photography").length;
     const totalCertificates = certificates.length;
 
     let experience = 4;
@@ -225,6 +226,7 @@ const AboutPage = () => {
       websiteProjects,
       designProjects,
       videoProjects,
+      photographyProjects,
       totalCertificates,
       experience
     };
@@ -258,14 +260,21 @@ const AboutPage = () => {
       color: "from-[#dfcfb9] to-[#bfa37a]",
       value: stats.videoProjects,
       label: tStats.video,
-      animation: "fade-left",
+      animation: "fade-up",
+    },
+    {
+      icon: Camera,
+      color: "from-[#bfa37a] to-[#dfcfb9]",
+      value: stats.photographyProjects,
+      label: tStats.photography,
+      animation: "fade-up",
     },
     {
       icon: Award,
-      color: "from-[#bfa37a] to-[#dfcfb9]",
+      color: "from-[#dfcfb9] to-[#bfa37a]",
       value: stats.totalCertificates,
       label: tStats.certificates,
-      animation: "fade-up",
+      animation: "fade-left",
     },
   ], [stats, tStats]);
 
@@ -342,7 +351,7 @@ const AboutPage = () => {
         </div>
 
         <Link to="/projects">
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 mt-6 cursor-pointer">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3 mt-6 cursor-pointer">
             {statsData.map((stat) => (
               <StatCard key={stat.label} {...stat} />
             ))}

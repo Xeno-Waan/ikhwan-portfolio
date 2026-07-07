@@ -28,6 +28,7 @@ import {
   Eye,
   Github,
   Download,
+  Camera,
 } from "lucide-react";
 import Swal from "sweetalert2";
 
@@ -120,6 +121,7 @@ const CATEGORIES = [
   { key: "website", label: "Website", icon: Globe, color: "from-blue-500/20 to-cyan-500/20", accent: "text-cyan-400" },
   { key: "design", label: "Poster / Design", icon: Palette, color: "from-purple-500/20 to-pink-500/20", accent: "text-pink-400" },
   { key: "video", label: "Video", icon: Video, color: "from-red-500/20 to-orange-500/20", accent: "text-red-400" },
+  { key: "photography", label: "Fotografi", icon: Camera, color: "from-emerald-500/20 to-teal-500/20", accent: "text-emerald-400" },
 ];
 
 // ─── Main Admin Dashboard ─────────────────────────────────────────────────────
@@ -328,7 +330,8 @@ const AdminDashboard = () => {
     const currentStatuses = [...bulkUploadStatus];
     let successCount = 0;
     const isDesign = activeTab === "design";
-    const targetTable = isDesign ? "projects" : "certificates";
+    const isPhoto = activeTab === "photography";
+    const targetTable = (isDesign || isPhoto) ? "projects" : "certificates";
     
     for (let i = 0; i < bulkFiles.length; i++) {
       const fileItem = bulkFiles[i];
@@ -354,6 +357,15 @@ const AdminDashboard = () => {
           Description: "",
           Img: publicUrl,
           Category: "design",
+          Link: "",
+          Github: "Private",
+          Features: [],
+          TechStack: []
+        } : isPhoto ? {
+          Title: fileItem.title || "Photo Project",
+          Description: "",
+          Img: publicUrl,
+          Category: "photography",
           Link: "",
           Github: "Private",
           Features: [],
@@ -460,7 +472,7 @@ const AdminDashboard = () => {
       }
 
       const payload = {
-        Title: currentProject.Title || (currentProject.Category === "design" ? "Design Project" : ""),
+        Title: currentProject.Title || (currentProject.Category === "design" ? "Design Project" : currentProject.Category === "photography" ? "Photo Project" : ""),
         Description: currentProject.Description || "",
         Link: currentProject.Link || "",
         Img: imageUrl,
@@ -633,6 +645,7 @@ const AdminDashboard = () => {
     { key: "website", label: "Website", icon: Globe, count: projects.filter(p => p.Category?.toLowerCase() === "website").length },
     { key: "design", label: "Poster & Design", icon: Palette, count: projects.filter(p => p.Category?.toLowerCase() === "design").length },
     { key: "video", label: "Video & Medsos", icon: Video, count: projects.filter(p => p.Category?.toLowerCase() === "video").length },
+    { key: "photography", label: "Fotografi", icon: Camera, count: projects.filter(p => p.Category?.toLowerCase() === "photography").length },
     { key: "certificates", label: "Sertifikat", icon: Award, count: certificates.length },
     { key: "comments", label: "Komentar", icon: MessageSquare, count: comments.length },
     { key: "settings", label: "Pengaturan", icon: Settings },
@@ -708,13 +721,13 @@ const AdminDashboard = () => {
       <main className="flex-1 p-5 md:p-8 z-10 overflow-y-auto">
 
         {/* ─── QUICK UPLOAD PANEL ────────────────────────────────────────────── */}
-        {(["website", "design", "video", "certificates"].includes(activeTab)) && (
+        {(["website", "design", "video", "photography", "certificates"].includes(activeTab)) && (
           <div className="mb-8 bg-white/[0.02] border border-white/10 rounded-2xl p-5 backdrop-blur-md">
             <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4 flex items-center gap-2">
               <span className="w-1.5 h-1.5 rounded-full bg-[#bfa37a]" />
               Opsi Unggah Cepat
             </h3>
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
               {/* Websites */}
               <button
                 type="button"
@@ -754,6 +767,19 @@ const AdminDashboard = () => {
                 <span className="text-[10px] text-gray-500 mt-1 text-center">Konten Video</span>
               </button>
 
+              {/* Photography */}
+              <button
+                type="button"
+                onClick={() => openProjectModal(null, "photography")}
+                className="group flex flex-col items-center justify-center p-5 rounded-xl border border-white/10 bg-black/30 hover:border-emerald-500/30 hover:bg-[#bfa37a]/5 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-[#bfa37a]/5"
+              >
+                <div className="w-12 h-12 rounded-full flex items-center justify-center bg-emerald-500/10 text-emerald-400 mb-3 group-hover:scale-110 transition-transform duration-300">
+                  <Camera className="w-6 h-6 group-hover:scale-110 transition-transform" />
+                </div>
+                <span className="text-sm font-semibold text-gray-200 group-hover:text-white">Photography</span>
+                <span className="text-[10px] text-gray-500 mt-1 text-center">Koleksi Foto</span>
+              </button>
+
               {/* Certificates */}
               <button
                 type="button"
@@ -771,16 +797,16 @@ const AdminDashboard = () => {
         )}
 
         {/* ─── PROJECTS TAB ─────────────────────────────────────────────────── */}
-        {["website", "design", "video"].includes(activeTab) && (
+        {["website", "design", "video", "photography"].includes(activeTab) && (
           <>
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
               <div>
                 <h2 className="text-2xl font-bold font-serif uppercase tracking-wider">
-                  {activeTab === "website" ? "Website Projects" : activeTab === "design" ? "Desain & Poster" : "Video & Medsos"}
+                  {activeTab === "website" ? "Website Projects" : activeTab === "design" ? "Desain & Poster" : activeTab === "video" ? "Video & Medsos" : "Fotografi"}
                 </h2>
                 <p className="text-gray-400 text-sm mt-0.5">
-                  {activeTab === "website" ? "Kelola proyek website portfolio Anda di sini." : activeTab === "design" ? "Kelola hasil desain, poster, dan branding Anda." : "Kelola video editan dan link postingan media sosial Anda."}
+                  {activeTab === "website" ? "Kelola proyek website portfolio Anda di sini." : activeTab === "design" ? "Kelola hasil desain, poster, dan branding Anda." : activeTab === "video" ? "Kelola video editan dan link postingan media sosial Anda." : "Kelola karya foto dan fotografi Anda di sini."}
                 </p>
               </div>
               <div className="flex items-center gap-2 flex-shrink-0">
@@ -875,7 +901,7 @@ const AdminDashboard = () => {
                 {projects.filter(p => p.Category?.toLowerCase() === activeTab).length === 0 && (
                   <div className="col-span-3 flex flex-col items-center justify-center py-24 text-gray-500 border border-dashed border-white/10 rounded-2xl gap-3">
                     <LayoutGrid className="w-10 h-10 opacity-30" />
-                    <p className="text-sm">Belum ada project kategori "{activeTab === "website" ? "Website" : activeTab === "design" ? "Desain" : "Video"}".</p>
+                    <p className="text-sm">Belum ada project kategori "{activeTab === "website" ? "Website" : activeTab === "design" ? "Desain" : activeTab === "video" ? "Video" : "Fotografi"}".</p>
                     <button
                       onClick={() => openProjectModal(null, activeTab)}
                       className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#bfa37a]/10 border border-[#bfa37a]/20 text-[#dfcfb9] text-xs font-medium hover:bg-[#bfa37a]/15 transition"
@@ -1118,7 +1144,7 @@ const AdminDashboard = () => {
               </Field>
 
               {/* Title */}
-              <Field label={currentProject.Category === "design" ? "Judul Project (Opsional)" : "Judul Project"} icon={FileImage}>
+              <Field label={["design", "photography"].includes(currentProject.Category) ? "Judul Project (Opsional)" : "Judul Project"} icon={FileImage}>
                 <input
                   type="text"
                   value={currentProject.Title}
@@ -1126,22 +1152,23 @@ const AdminDashboard = () => {
                   placeholder={
                     currentProject.Category === "website" ? "cth: Portfolio Website V5" :
                     currentProject.Category === "design" ? "cth: Brand Identity Obsidian Cafe" :
+                    currentProject.Category === "photography" ? "cth: Landscape Sunrise Merapi" :
                     "cth: Cinematic Travel Reel 2025"
                   }
                   className={inputCls}
-                  required={currentProject.Category !== "design"}
+                  required={!["design", "photography"].includes(currentProject.Category)}
                 />
               </Field>
 
               {/* Description */}
-              <Field label={currentProject.Category === "design" ? "Deskripsi (Opsional)" : "Deskripsi"} icon={MessageSquare}>
+              <Field label={["design", "photography"].includes(currentProject.Category) ? "Deskripsi (Opsional)" : "Deskripsi"} icon={MessageSquare}>
                 <textarea
                   value={currentProject.Description}
                   onChange={(e) => setCurrentProject({ ...currentProject, Description: e.target.value })}
                   placeholder="Jelaskan project ini, tujuan, fitur utama, dan teknologi yang digunakan..."
                   rows={3}
                   className={textareaCls}
-                  required={currentProject.Category !== "design"}
+                  required={!["design", "photography"].includes(currentProject.Category)}
                 />
               </Field>
 
@@ -1156,8 +1183,8 @@ const AdminDashboard = () => {
                 hint={
                   currentProject.Category === "video"
                     ? "Opsional — hanya untuk referensi link postingan asli di sosmed"
-                    : currentProject.Category === "design"
-                    ? "Opsional — bisa link Behance, Dribbble, dll"
+                    : ["design", "photography"].includes(currentProject.Category)
+                    ? "Opsional — bisa link Behance, Dribbble, Unsplash, dll"
                     : ""
                 }
               >
@@ -1168,6 +1195,7 @@ const AdminDashboard = () => {
                   placeholder={
                     currentProject.Category === "video" ? "https://instagram.com/reel/... (opsional)" :
                     currentProject.Category === "design" ? "https://behance.net/... (opsional)" :
+                    currentProject.Category === "photography" ? "https://unsplash.com/... (opsional)" :
                     "https://mywebsite.com"
                   }
                   className={inputCls}
@@ -1198,14 +1226,18 @@ const AdminDashboard = () => {
                 </Field>
               )}
 
-              {/* Tech Stack — only for website/design */}
-              {["website", "design"].includes(currentProject.Category) && (
-                <Field label="Tech Stack / Tools (pisahkan dengan koma)" icon={Settings}>
+              {/* Tech Stack — only for website/design/photography */}
+              {["website", "design", "photography"].includes(currentProject.Category) && (
+                <Field label={currentProject.Category === "photography" ? "Kamera / Gear (pisahkan dengan koma)" : "Tech Stack / Tools (pisahkan dengan koma)"} icon={Settings}>
                   <input
                     type="text"
                     value={currentProject.TechStack}
                     onChange={(e) => setCurrentProject({ ...currentProject, TechStack: e.target.value })}
-                    placeholder={currentProject.Category === "website" ? "React, Tailwind, Supabase" : "Figma, Adobe Illustrator, Canva"}
+                    placeholder={
+                      currentProject.Category === "website" ? "React, Tailwind, Supabase" :
+                      currentProject.Category === "photography" ? "Sony A7IV, FE 85mm f1.4, Lightroom" :
+                      "Figma, Adobe Illustrator, Canva"
+                    }
                     className={inputCls}
                   />
                 </Field>
@@ -1456,10 +1488,10 @@ const AdminDashboard = () => {
             <div className="sticky top-0 z-10 flex items-center justify-between px-6 py-4 border-b border-white/[0.07] bg-[#080809]/90 backdrop-blur-sm">
               <div>
                 <h3 className="text-xl font-bold font-serif text-[#dfcfb9]">
-                  {activeTab === "design" ? "Upload Sekaligus Desain (Bulk)" : "Upload Sekaligus Sertifikat (Bulk)"}
+                  {activeTab === "design" ? "Upload Sekaligus Desain (Bulk)" : activeTab === "photography" ? "Upload Sekaligus Foto (Bulk)" : "Upload Sekaligus Sertifikat (Bulk)"}
                 </h3>
                 <p className="text-gray-500 text-xs mt-0.5">
-                  {activeTab === "design" ? "Unggah beberapa file gambar desain sekaligus" : "Unggah beberapa gambar sertifikat sekaligus"}
+                  {activeTab === "design" ? "Unggah beberapa file gambar desain sekaligus" : activeTab === "photography" ? "Unggah beberapa karya foto sekaligus" : "Unggah beberapa gambar sertifikat sekaligus"}
                 </p>
               </div>
               <button 

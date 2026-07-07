@@ -18,6 +18,7 @@ const Navbar = () => {
         { path: "/projects?tab=websites", label: t.websites },
         { path: "/projects?tab=design", label: t.design },
         { path: "/projects?tab=video", label: t.video },
+        { path: "/projects?tab=photography", label: t.photography },
         { path: "/certificates", label: t.certificates },
         { path: "/contact", label: t.contact },
         { path: "/comments", label: t.comments },

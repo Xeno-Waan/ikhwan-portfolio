@@ -212,7 +212,7 @@ const Home = () => {
                   {/* Bottom overlay badge */}
                   <div className="absolute bottom-4 left-4 right-4 p-3 rounded-xl bg-black/70 backdrop-blur-md border border-white/10 transition-all duration-500 transform translate-y-2 group-hover:translate-y-0 opacity-0 group-hover:opacity-100">
                     <p className="text-white font-serif font-semibold text-sm sm:text-base">M. Ikhwan Manshur</p>
-                    <p className="text-xs text-gray-400 font-light">Web Dev · Design · Video Editing</p>
+                    <p className="text-xs text-gray-400 font-light">Web Dev · Design · Video · Photography</p>
                   </div>
                 </div>
               </div>
