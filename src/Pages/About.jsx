@@ -326,7 +326,7 @@ const AboutPage = () => {
             </div>
 
             <div className="flex flex-row items-center lg:items-start gap-3 w-full">
-              <a href="https://canva.link/b98j7u5k1yyue2r" target="_blank" rel="noopener noreferrer">
+              <a href="/CV.pdf" download="CV_Muhammad_Ikhwan.pdf">
                 <button 
                   data-aos="fade-up"
                   data-aos-duration="800"
