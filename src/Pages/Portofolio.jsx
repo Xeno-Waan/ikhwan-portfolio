@@ -178,29 +178,54 @@ export default function FullWidthTabs() {
   };
 
   const renderProjectGrid = (filtered, tabValue) => {
+    const isPhotography = tabValue === 3;
     return (
-      <div className="container mx-auto flex justify-center items-center overflow-hidden">
+      <div className="container mx-auto overflow-hidden">
         {filtered.length > 0 ? (
-          <div className={`grid ${getGridCols(tabValue)} w-full`}>
-            {filtered.map((project, index) => (
-              <div
-                key={project.id || index}
-                data-aos={index % 4 === 0 ? "fade-up-right" : index % 4 === 1 ? "fade-up" : index % 4 === 2 ? "fade-up" : "fade-up-left"}
-                data-aos-duration={index % 4 === 0 ? "1000" : index % 4 === 1 ? "1100" : index % 4 === 2 ? "1200" : "1000"}
-              >
-                <CardProject
-                  Img={project.Img}
-                  Title={project.Title}
-                  Description={project.Description}
-                  Link={project.Link}
-                  VideoFile={project.VideoFile}
-                  id={project.id}
-                  Category={project.Category}
-                  TechStack={project.TechStack}
-                />
-              </div>
-            ))}
-          </div>
+          isPhotography ? (
+            <div className="columns-1 sm:columns-2 md:columns-3 lg:columns-4 gap-6 space-y-6 w-full">
+              {filtered.map((project, index) => (
+                <div
+                  key={project.id || index}
+                  data-aos="fade-up"
+                  data-aos-duration="1000"
+                  className="break-inside-avoid mb-6"
+                >
+                  <CardProject
+                    Img={project.Img}
+                    Title={project.Title}
+                    Description={project.Description}
+                    Link={project.Link}
+                    VideoFile={project.VideoFile}
+                    id={project.id}
+                    Category={project.Category}
+                    TechStack={project.TechStack}
+                  />
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className={`grid ${getGridCols(tabValue)} w-full`}>
+              {filtered.map((project, index) => (
+                <div
+                  key={project.id || index}
+                  data-aos={index % 4 === 0 ? "fade-up-right" : index % 4 === 1 ? "fade-up" : index % 4 === 2 ? "fade-up" : "fade-up-left"}
+                  data-aos-duration={index % 4 === 0 ? "1000" : index % 4 === 1 ? "1100" : index % 4 === 2 ? "1200" : "1000"}
+                >
+                  <CardProject
+                    Img={project.Img}
+                    Title={project.Title}
+                    Description={project.Description}
+                    Link={project.Link}
+                    VideoFile={project.VideoFile}
+                    id={project.id}
+                    Category={project.Category}
+                    TechStack={project.TechStack}
+                  />
+                </div>
+              ))}
+            </div>
+          )
         ) : (
           <div className="text-center py-20 text-gray-500 font-light text-sm">
             {t.empty}

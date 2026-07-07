@@ -362,7 +362,7 @@ const AdminDashboard = () => {
           Features: [],
           TechStack: []
         } : isPhoto ? {
-          Title: fileItem.title || "Photo Project",
+          Title: "",
           Description: "",
           Img: publicUrl,
           Category: "photography",
@@ -810,7 +810,7 @@ const AdminDashboard = () => {
                 </p>
               </div>
               <div className="flex items-center gap-2 flex-shrink-0">
-                {activeTab === "design" && (
+                {["design", "photography"].includes(activeTab) && (
                   <button
                     onClick={() => setShowBulkCertModal(true)}
                     className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white font-semibold text-sm hover:bg-white/10 transition shadow-md flex-shrink-0"
@@ -822,7 +822,7 @@ const AdminDashboard = () => {
                   onClick={() => openProjectModal(null, activeTab)}
                   className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#bfa37a] to-[#dfcfb9] text-black font-semibold text-sm hover:opacity-90 transition shadow-md shadow-[#bfa37a]/15 flex-shrink-0"
                 >
-                  <Plus className="w-4 h-4" /> Tambah {activeTab === "website" ? "Website" : activeTab === "design" ? "Desain" : "Video"}
+                  <Plus className="w-4 h-4" /> Tambah {activeTab === "website" ? "Website" : activeTab === "design" ? "Desain" : activeTab === "video" ? "Video" : "Foto"}
                 </button>
               </div>
             </div>
@@ -1553,17 +1553,23 @@ const AdminDashboard = () => {
                       return (
                         <div key={idx} className="flex items-center justify-between p-3 rounded-xl bg-white/[0.02] border border-white/5 gap-3">
                           <div className="flex-1 min-w-0">
-                            <input
-                              type="text"
-                              value={fileObj.title}
-                              disabled={uploadingFile}
-                              onChange={(e) => {
-                                const newTitle = e.target.value;
-                                setBulkFiles(prev => prev.map((f, i) => i === idx ? { ...f, title: newTitle } : f));
-                              }}
-                              className="w-full bg-transparent text-sm text-white focus:outline-none focus:border-[#bfa37a] border-b border-transparent placeholder-gray-500 font-medium truncate"
-                            />
-                            <p className="text-[10px] text-gray-500 mt-0.5 font-mono truncate">{fileObj.file.name}</p>
+                            {activeTab === "photography" ? (
+                              <p className="text-sm text-white font-medium truncate">{fileObj.file.name.replace(/\.[^/.]+$/, "")}</p>
+                            ) : (
+                              <input
+                                type="text"
+                                value={fileObj.title}
+                                disabled={uploadingFile}
+                                onChange={(e) => {
+                                  const newTitle = e.target.value;
+                                  setBulkFiles(prev => prev.map((f, i) => i === idx ? { ...f, title: newTitle } : f));
+                                }}
+                                className="w-full bg-transparent text-sm text-white focus:outline-none focus:border-[#bfa37a] border-b border-transparent placeholder-gray-500 font-medium truncate"
+                              />
+                            )}
+                            {activeTab !== "photography" && (
+                              <p className="text-[10px] text-gray-500 mt-0.5 font-mono truncate">{fileObj.file.name}</p>
+                            )}
                           </div>
                           
                           <div className="flex-shrink-0 flex flex-col items-end gap-1">

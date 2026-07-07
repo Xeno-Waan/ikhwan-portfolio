@@ -248,7 +248,7 @@ const CardProject = ({ Img, Title, Description, Link: ProjectLink, VideoFile, id
           <div className="absolute inset-0 bg-gradient-to-br from-[#bfa37a]/5 via-transparent to-[#dfcfb9]/5 opacity-50 group-hover:opacity-70 transition-opacity duration-300"></div>
       
           <div className="relative p-5 z-10">
-            <div className={`relative overflow-hidden rounded-lg ${isWebsite ? 'aspect-video' : 'aspect-[4/5]'} bg-black`}>
+            <div className={`relative overflow-hidden rounded-lg ${isWebsite ? 'aspect-video' : isPhotography ? 'h-auto w-full' : 'aspect-[4/5]'} bg-black`}>
               {/* Jika ada VideoFile: video IS the thumbnail (langsung putar saat hover) */}
               {isVideo && VideoFile ? (
                 <>
@@ -273,7 +273,7 @@ const CardProject = ({ Img, Title, Description, Link: ProjectLink, VideoFile, id
                   <img
                     src={Img}
                     alt={Title}
-                    className={`w-full h-full object-cover transition-all duration-300 ${
+                    className={`w-full ${isPhotography ? 'h-auto object-contain' : 'h-full object-cover'} transition-all duration-300 ${
                       playPreview ? 'opacity-0' : 'group-hover:scale-105 opacity-100'
                     }`}
                   />
