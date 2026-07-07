@@ -86,7 +86,7 @@ const socialLinks = [
         </g>
       </svg>
     ),
-    url: "https://www.tiktok.com/@hanzwanss?_r=1&_t=ZS-9344QqAfNp7",
+    url: "https://vt.tiktok.com/ZSC7mFrBa/",
     color: "black",
     gradient: "from-[#000000] via-[#25F4EE] to-[#FE2C55]",
   },
